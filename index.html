@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    
+    <title>Ribeiro Móveis e Colchões | São José dos Campos</title>
+    
+    <meta name="description" content="Móveis de qualidade para seu lar. Frete e montagem grátis em São José dos Campos. 30 anos de tradição.">
+    <meta name="keywords" content="móveis, colchões, São José dos Campos, frete grátis">
+    <meta name="author" content="Ribeiro Móveis">
+    <meta name="robots" content="index, follow">
+    
+    <!-- 🔥 META TAGS OPEN GRAPH - PARA NETLIFY -->
+    <meta property="og:title" content="Ribeiro Móveis e Colchões">
+    <meta property="og:description" content="Móveis de qualidade para seu lar. Frete e montagem grátis! 30 anos de tradição.">
+    <meta property="og:image" content="https://ribeiromoveis.netlify.app/imagens/logo-ribeiro.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://ribeiromoveis.netlify.app/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:site_name" content="Ribeiro Móveis e Colchões">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ribeiro Móveis e Colchões">
+    <meta name="twitter:description" content="Móveis de qualidade para seu lar. Frete e montagem grátis!">
+    <meta name="twitter:image" content="https://ribeiromoveis.netlify.app/imagens/logo-ribeiro.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ribeiro Móveis">
+    
+    <link rel="icon" type="image/png" sizes="32x32" href="imagens/logo-header.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="imagens/logo-header.png">
+    
+    <link rel="canonical" href="https://ribeiromoveis.netlify.app/">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- FIREBASE SDK (apenas para banco de dados) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        :root {
+            --vinho: #5D1A1A;
+            --vinho-escuro: #3D0F0F;
+            --dourado: #D4AF37;
+            --dourado-claro: #FFD700;
+            --branco: #FFFFFF;
+            --creme: #FAF8F5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--creme);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        img { max-width: 100%; height: auto; display: block; }
+        a { text-decoration: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+        button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: linear-gradient(135deg, var(--vinho) 0%, var(--vinho-escuro) 100%);
+            border-bottom: 3px solid var(--dourado);
+            z-index: 1000;
+            height: 80px;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        .logo { display: flex; align-items: center; }
+
+        /* LOGO DA NAVBAR - A PEQUENA */
+        .logo-header-img {
+            height: 120px;
+            width: auto;
+            filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
+        }
+
+        .nav { display: flex; gap: 25px; align-items: center; }
+
+        .nav a {
+            color: var(--branco);
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav a:hover { color: var(--dourado); }
+
+        .menu-mobile {
+            display: none;
+            background: transparent;
+            border: 2px solid var(--dourado);
+            color: var(--dourado);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        main { padding-top: 80px; }
+
+        .hero {
+            min-height: calc(100vh - 80px);
+            background: linear-gradient(135deg, rgba(93, 26, 26, 0.95), rgba(61, 15, 15, 0.9));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .frete-badge {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: linear-gradient(135deg, var(--vinho), var(--vinho-escuro));
+            color: var(--dourado);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid var(--dourado);
+            z-index: 10;
+        }
+
+        .frete-badge i { font-size: 1.3rem; }
+
+        .hero-content {
+            color: var(--branco);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 600px;
+        }
+
+        /* LOGO PRINCIPAL DO CENTRO - A GRANDE */
+        .hero-logo-wrap {
+            width: 300px;
+            max-width: 80vw;
+            margin-bottom: -35px;
+            animation: pulse 3s infinite;
+        }
+
+        .hero-logo-wrap img {
+            width: 100%;
+            filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.8));
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .gold-line {
+            width: 160px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--dourado), transparent);
+            margin: 0 auto 20px;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            padding: 15px 50px;
+            background: var(--dourado);
+            color: var(--vinho);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 2px solid var(--dourado-claro);
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+        }
+
+        .produtos {
+            padding: 60px 0;
+            background: var(--branco);
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--vinho);
+            margin-bottom: 15px;
+        }
+
+        .gold-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .gold-divider .line {
+            width: 50px;
+            height: 2px;
+            background: var(--dourado);
+        }
+
+        .gold-divider span { color: var(--dourado); }
+
+        .ambientes-menu {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            padding: 0 10px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .ambiente-item { position: relative; z-index: 101; }
+
+        .ambiente-btn {
+            padding: 10px 14px;
+            background: white;
+            border: 2px solid var(--vinho);
+            color: var(--vinho);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .ambiente-btn:hover, .ambiente-btn.active {
+            background: var(--vinho);
+            color: var(--dourado);
+            border-color: var(--dourado);
+        }
+
+        .subcategorias-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%; left: 0;
+            background: white;
+            border: 2px solid var(--dourado);
+            border-top: none;
+            min-width: 180px;
+            z-index: 9999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .ambiente-item:hover .subcategorias-dropdown { display: block; }
+
+        .subcategoria-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+            background: white;
+        }
+
+        .subcategoria-item:hover {
+            background: var(--creme);
+            color: var(--vinho);
+            padding-left: 20px;
+        }
+
+        .produtos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 25px;
+            padding: 0 15px;
+        }
+
+        .produto-card {
+            background: var(--branco);
+            border: 1px solid #eee;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .produto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .produto-image {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+
+        .produto-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .produto-info { padding: 20px; }
+
+        .produto-info h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--vinho);
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .produto-price {
+            font-size: 1.3rem;
+            color: var(--dourado);
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .produto-colors {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .color-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .produto-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--vinho);
+            color: var(--branco);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .produto-btn:hover {
+            background: var(--vinho-escuro);
+            color: var(--dourado);
+        }
+
+        .sync-indicator {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+
+        .sync-indicator.online { background: #25D366; color: white; }
+        .sync-indicator.offline { background: #dc3545; color: white; }
+        .sync-indicator.syncing { background: var(--dourado); color: var(--vinho); }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(93, 26, 26, 0.95);
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--dourado);
+        }
+
+        .loading-overlay.active { display: flex; }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--dourado);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sobre {
+            padding: 60px 0;
+            background: linear-gradient(135deg, var(--vinho), var(--vinho-escuro));
+            color: var(--branco);
+        }
+
+        .sobre-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .sobre-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--dourado);
+            margin-bottom: 20px;
+        }
+
+        .sobre-text p {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            opacity: 0.9;
+            line-height: 1.7;
+        }
+
+        .sobre-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 25px;
+        }
+
+        .stat { text-align: center; }
+
+        .stat-num {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: var(--dourado);
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+
+        .sobre-image img {
+            width: 100%;
+            border: 3px solid var(--dourado);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .contato {
+            padding: 60px 0;
+            background: var(--creme);
+        }
+
+        .contato-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .info-card {
+            background: var(--branco);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--dourado);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .info-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--vinho);
+            color: var(--dourado);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            border-radius: 50%;
+        }
+
+        .info-card h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--vinho);
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .info-card p {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .contato-map {
+            height: 100%;
+            min-height: 350px;
+            border: 3px solid var(--dourado);
+        }
+
+        .contato-map iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, var(--vinho-escuro), var(--vinho));
+            color: var(--branco);
+            padding: 25px 0;
+            border-top: 3px solid var(--dourado);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .footer-logo {
+            width: 180px;
+            margin-bottom: -30px;
+        }
+
+        .footer-logo img {
+            width: 100%;
+            filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+        }
+
+        .footer-divider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .footer-divider .line {
+            width: 80px;
+            height: 1px;
+            background: var(--dourado);
+        }
+
+        .footer-social { display: flex; gap: 12px; }
+
+        .social-btn {
+            width: 50px;
+            height: 50px;
+            background: transparent;
+            border: 3px solid #25D366;
+            color: #25D366;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            border-radius: 50%;
+        }
+
+        .social-btn:hover {
+            background: #25D366;
+            color: var(--branco);
+            transform: scale(1.1);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+            opacity: 0.7;
+            font-size: 0.85rem;
+        }
+
+        .admin-link-sutil {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+            font-size: 0.7rem;
+            z-index: 100;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(61, 15, 15, 0.95);
+            z-index: 2000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active { display: block; }
+
+        .modal-content {
+            background: var(--branco);
+            max-width: 900px;
+            margin: 20px auto;
+            position: relative;
+            border: 3px solid var(--dourado);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: var(--dourado);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--vinho);
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body { display: grid; grid-template-columns: 1fr 1fr; }
+
+        .modal-gallery {
+            background: var(--creme);
+            padding: 25px;
+        }
+
+        .gallery-main {
+            position: relative;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .gallery-main img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--vinho);
+            color: var(--dourado);
+            border: 2px solid var(--dourado);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-nav.prev { left: 10px; }
+        .gallery-nav.next { right: 10px; }
+
+        .gallery-thumbs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .gallery-thumbs img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .gallery-thumbs img.active { border-color: var(--dourado); }
+
+        .modal-info { padding: 25px; }
+
+        .modal-info h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--vinho);
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .disponibilidade-modal {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            border: 2px solid var(--dourado);
+            background: var(--vinho);
+            color: var(--dourado);
+            margin-bottom: 10px;
+        }
+
+        .gold-line-small {
+            width: 40px;
+            height: 3px;
+            background: var(--dourado);
+            margin-bottom: 15px;
+        }
+
+        .modal-price {
+            font-size: 1.6rem;
+            color: var(--dourado);
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .dimensoes-compactas {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid var(--dourado);
+        }
+
+        .dimensoes-compactas h4 {
+            color: var(--vinho);
+            margin-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+        }
+
+        .dimensoes-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .dimensao-item-compacta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .dimensao-item-compacta i {
+            color: var(--dourado);
+            font-size: 0.9rem;
+        }
+
+        .dimensao-item-compacta .label {
+            font-weight: bold;
+            color: var(--vinho);
+            font-size: 0.8rem;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            padding: 8px 14px;
+            border: 2px solid var(--vinho);
+            background: transparent;
+            color: var(--vinho);
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .color-option:hover, .color-option.active {
+            background: var(--vinho);
+            color: var(--dourado);
+        }
+
+        .btn-whatsapp {
+            margin-top: 15px;
+            padding: 15px;
+            background: #25D366;
+            color: var(--branco);
+            border: none;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: #25D366;
+            color: var(--branco);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 5px 20px rgba(37, 211, 102, 0.4);
+            border: 3px solid var(--branco);
+            z-index: 999;
+        }
+
+        @media (max-width: 768px) {
+            .header { height: 70px; }
+            .logo-header-img { height: 90px; }
+            main { padding-top: 70px; }
+            
+            .nav { 
+                display: none; 
+                position: fixed;
+                top: 70px;
+                left: 0; right: 0;
+                background: var(--vinho);
+                flex-direction: column;
+                padding: 20px;
+                border-top: 2px solid var(--dourado);
+                gap: 15px;
+                z-index: 999;
+            }
+            
+            .nav.active { display: flex; }
+            .menu-mobile { display: block; }
+            
+            .hero {
+                min-height: calc(100vh - 70px);
+                padding: 30px 15px;
+            }
+            
+            .frete-badge { 
+                position: absolute; 
+                top: 15px; right: 15px; 
+                font-size: 0.75rem;
+                padding: 10px 15px;
+            }
+            
+            .hero-logo-wrap { 
+                width: 220px; 
+                margin-top: 40px;
+            }
+            
+            .gold-line {
+                width: 100px;
+                margin-bottom: 15px;
+            }
+            
+            .produtos { padding: 40px 0; }
+            .section-header h2 { font-size: 1.6rem; }
+            .ambientes-menu { gap: 6px; }
+            .ambiente-btn { padding: 8px 12px; font-size: 0.7rem; }
+            
+            .subcategorias-dropdown {
+                position: fixed;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 280px;
+            }
+            
+            .produtos-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .produto-image { height: 160px; }
+            .sobre-content { grid-template-columns: 1fr; gap: 30px; }
+            .contato-grid { grid-template-columns: 1fr; gap: 25px; }
+            .contato-map { min-height: 250px; order: -1; }
+            .modal-body { grid-template-columns: 1fr; }
+            .gallery-main { height: 220px; }
+            .dimensoes-row { flex-direction: column; gap: 8px; }
+            .sync-indicator {
+                bottom: 80px;
+                right: 10px;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .produtos-grid { grid-template-columns: 1fr; }
+            .hero-logo-wrap { width: 180px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- LINKS INVISÍVEIS PARA FORÇAR RECONHECIMENTO DO WHATSAPP -->
+    <div style="display:none; visibility:hidden; height:0; width:0; overflow:hidden;">
+        <a href="https://ribeiromoveis.netlify.app/">Ribeiro Móveis</a>
+        <a href="https://ribeiromoveis.netlify.app/">Ribeiro Móveis</a>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Carregando produtos...</p>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="#" class="logo" onclick="window.scrollTo(0,0); return false;">
+                <img src="imagens/logo-header.png" alt="Ribeiro Móveis" class="logo-header-img" onerror="this.style.display='none'">
+            </a>
+            
+            <nav class="nav" id="mainNav">
+                <a href="#inicio" onclick="closeMenu()">Início</a>
+                <a href="#produtos" onclick="closeMenu()">Produtos</a>
+                <a href="#sobre" onclick="closeMenu()">Sobre</a>
+                <a href="#contato" onclick="closeMenu()">Contato</a>
+            </nav>
+            
+            <button class="menu-mobile" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section id="inicio" class="hero">
+            <div class="frete-badge">
+                <i class="fas fa-truck"></i>
+                <span>Frete e Montagem<br>Grátis</span>
+            </div>
+            
+            <div class="hero-content">
+                <div class="hero-logo-wrap">
+                    <img src="imagens/logo-ribeiro.png" alt="Ribeiro Móveis e Colchões" onerror="this.parentElement.innerHTML='<h1 style=\'font-size:2rem;color:var(--dourado);font-family:Playfair Display\'>RIBEIRO</h1>'">
+                </div>
+                <div class="gold-line"></div>
+                <p>Móveis de qualidade para seu lar</p>
+                <a href="#produtos" class="btn-primary">Ver Produtos</a>
+            </div>
+        </section>
+
+        <section id="produtos" class="produtos">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Nossos Produtos</h2>
+                    <div class="gold-divider">
+                        <div class="line"></div>
+                        <span>✦</span>
+                        <div class="line"></div>
+                    </div>
+                </div>
+                
+                <div class="ambientes-menu">
+                    <button class="ambiente-btn active" onclick="filtrarProdutos('todos')">
+                        <i class="fas fa-th-large"></i> Todos
+                    </button>
+                    
+                    <div class="ambiente-item">
+                        <button class="ambiente-btn" onclick="filtrarProdutos('dormitorio')">
+                            <i class="fas fa-bed"></i> Dormitório <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="subcategorias-dropdown">
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Box')">Box</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Box Baú')">Box Baú</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Cabeceira')">Cabeceira</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Cama')">Cama</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Colchão')">Colchão</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Cômoda')">Cômoda</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Guarda-Roupa')">Guarda-Roupa</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Mesa de Cabeceira')">Mesa de Cabeceira</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Recamier')">Recamier</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ambiente-item">
+                        <button class="ambiente-btn" onclick="filtrarProdutos('cozinha')">
+                            <i class="fas fa-utensils"></i> Cozinha <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="subcategorias-dropdown">
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Armário')">Armário</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Cadeira')">Cadeira</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Conj. Mesa de Jantar')">Conj. Mesa de Jantar</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Mesa')">Mesa</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ambiente-item">
+                        <button class="ambiente-btn" onclick="filtrarProdutos('sala')">
+                            <i class="fas fa-couch"></i> Sala <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="subcategorias-dropdown">
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Aparador')">Aparador</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Buffet')">Buffet</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Cristaleira')">Cristaleira</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Home')">Home</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Mesa de Centro')">Mesa de Centro</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Painel')">Painel</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Poltrona')">Poltrona</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Rack')">Rack</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Sofá')">Sofá</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ambiente-item">
+                        <button class="ambiente-btn" onclick="filtrarProdutos('colchoes')">
+                            <i class="fas fa-mattress-pillow"></i> Colchões <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="subcategorias-dropdown">
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Solteiro')">Solteiro</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Solteiro King')">Solteiro King</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Casal')">Casal</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Queen')">Queen</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'King')">King</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ambiente-item">
+                        <button class="ambiente-btn" onclick="filtrarProdutos('complementos')">
+                            <i class="fas fa-plus-circle"></i> Complementos <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="subcategorias-dropdown">
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Mesa de Computador')">Mesa de Computador</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Multiuso')">Multiuso</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Multiuso Área Serviço')">Multiuso Área Serviço</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Penteadeira')">Penteadeira</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Puff')">Puff</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ambiente-item">
+                        <button class="ambiente-btn" onclick="filtrarProdutos('infantil')">
+                            <i class="fas fa-baby"></i> Infantil <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="subcategorias-dropdown">
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('infantil', 'Berço')">Berço</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('infantil', 'Cômoda')">Cômoda</div>
+                            <div class="subcategoria-item" onclick="filtrarSubcategoria('infantil', 'Guarda-Roupa')">Guarda-Roupa</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="produtos-grid" id="produtosGrid"></div>
+            </div>
+        </section>
+
+        <section id="sobre" class="sobre">
+            <div class="container">
+                <div class="sobre-content">
+                    <div class="sobre-text">
+                        <h2>Sobre Nós</h2>
+                        <p>Há mais de 30 anos, nossa história começou de forma simples, mas com um propósito muito claro: trabalhar com honestidade e entregar qualidade de verdade.</p>
+                        <p>Tudo teve início quando o fundador da empresa começou vendendo móveis usados, escolhendo cada peça com cuidado e responsabilidade.</p>
+                        <p>Hoje, seguimos firmes nos mesmos valores que construíram nossa trajetória: confiança, transparência e compromisso com cada cliente.</p>
+                        
+                        <div class="sobre-stats">
+                            <div class="stat">
+                                <span class="stat-num">30</span>
+                                <span class="stat-label">Anos de Tradição</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-num">100%</span>
+                                <span class="stat-label">Qualidade</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sobre-image">
+                        <img src="imagens/foto-loja.png" alt="Loja Ribeiro Móveis" onerror="this.style.display='none'">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contato" class="contato">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Entre em Contato</h2>
+                    <div class="gold-divider">
+                        <div class="line"></div>
+                        <span>✦</span>
+                        <div class="line"></div>
+                    </div>
+                </div>
+                
+                <div class="contato-grid">
+                    <div class="contato-info">
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <h3>Endereço</h3>
+                            <p>R. Felicio Jabbur Nasser, 540<br>Bairro Galo Branco<br>São José dos Campos - SP</p>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <h3>Telefones</h3>
+                            <p>(12) 3905-1136<br>(12) 99165-2100</p>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3>Horário</h3>
+                            <p>Seg - Sex: 8:30h às 19h<br>Sáb: 8:30h às 16h</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contato-map">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.296041358647!2d-45.771215!3d-23.1348!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDA4JzA1LjMiUyA0NcKwNDYnMTYuNCJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" 
+                            width="100%" 
+                            height="100%" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="imagens/logo-ribeiro.png" alt="Ribeiro" onerror="this.style.display='none'">
+                </div>
+                
+                <div class="footer-divider">
+                    <div class="line"></div>
+                    <span>✦</span>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="footer-social">
+                    <a href="https://api.whatsapp.com/send?phone=5512991652100" class="social-btn" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 Ribeiro Móveis e Colchões. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="produtoModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-body">
+                <div class="modal-gallery">
+                    <div class="gallery-main">
+                        <img id="modalMainImage" src="" alt="Produto">
+                        <button class="gallery-nav prev" onclick="changeImage(-1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="gallery-nav next" onclick="changeImage(1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="gallery-thumbs" id="galleryThumbs"></div>
+                </div>
+                <div class="modal-info">
+                    <div class="modal-header">
+                        <h2 id="modalTitle"></h2>
+                        <div id="modalDisponibilidade"></div>
+                    </div>
+                    
+                    <div class="gold-line-small"></div>
+                    <p class="modal-price" id="modalPrice"></p>
+                    
+                    <div class="dimensoes-compactas">
+                        <h4><i class="fas fa-ruler-combined"></i> Dimensões</h4>
+                        <div class="dimensoes-row">
+                            <div class="dimensao-item-compacta">
+                                <i class="fas fa-arrows-alt-h"></i>
+                                <span class="label">Largura:</span>
+                                <span class="valor" id="dimLargura">-</span>
+                            </div>
+                            <div class="dimensao-item-compacta">
+                                <i class="fas fa-arrows-alt-v"></i>
+                                <span class="label">Altura:</span>
+                                <span class="valor" id="dimAltura">-</span>
+                            </div>
+                            <div class="dimensao-item-compacta">
+                                <i class="fas fa-expand"></i>
+                                <span class="label">Profundidade:</span>
+                                <span class="valor" id="dimProfundidade">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h4><i class="fas fa-palette"></i> Cores Disponíveis</h4>
+                        <div class="color-options" id="colorOptions"></div>
+                    </div>
+                    
+                    <button class="btn-whatsapp" onclick="enviarWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> Quero este Produto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="https://api.whatsapp.com/send?phone=5512991652100&text=Olá! Gostaria de mais informações sobre os produtos." class="whatsapp-float" target="_blank" rel="noopener noreferrer">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <a href="admin.html" class="admin-link-sutil">adm</a>
+
+    <div id="syncIndicator" class="sync-indicator offline">
+        <i class="fas fa-wifi"></i> <span>Offline</span>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxlhL9IMFvUKAGxYikutb1BU2WGnC_t5E",
+            authDomain: "ribeiro-moveis.firebaseapp.com",
+            databaseURL: "https://ribeiro-moveis-default-rtdb.firebaseio.com",
+            projectId: "ribeiro-moveis",
+            storageBucket: "ribeiro-moveis.appspot.com",
+            messagingSenderId: "215506296403",
+            appId: "1:215506296403:web:b298fccdfd65d20001b0a6"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let produtos = [];
+        let currentImageIndex = 0;
+        let currentProduto = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            db.ref('.info/connected').on('value', function(snap) {
+                const indicator = document.getElementById('syncIndicator');
+                if (snap.val() === true) {
+                    indicator.className = 'sync-indicator online';
+                    indicator.innerHTML = '<i class="fas fa-wifi"></i> <span>Online</span>';
+                } else {
+                    indicator.className = 'sync-indicator offline';
+                    indicator.innerHTML = '<i class="fas fa-wifi-slash"></i> <span>Offline</span>';
+                }
+            });
+
+            carregarProdutosFirebase();
+        });
+
+        function carregarProdutosFirebase() {
+            const loading = document.getElementById('loadingOverlay');
+            const indicator = document.getElementById('syncIndicator');
+            
+            loading.classList.add('active');
+            indicator.className = 'sync-indicator syncing';
+            indicator.innerHTML = '<i class="fas fa-sync fa-spin"></i> <span>Sincronizando...</span>';
+
+            const backup = localStorage.getItem('produtos_backup');
+            if (backup) {
+                try {
+                    produtos = JSON.parse(backup);
+                    renderProdutos('todos');
+                    loading.classList.remove('active');
+                } catch (e) {}
+            }
+
+            db.ref('produtos').on('value', function(snapshot) {
+                const dados = snapshot.val();
+                
+                if (dados) {
+                    produtos = Object.keys(dados).map(function(key) {
+                        return { id: key, ...dados[key] };
+                    });
+                    
+                    localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+                    renderProdutos('todos');
+                    
+                    indicator.className = 'sync-indicator online';
+                    indicator.innerHTML = '<i class="fas fa-wifi"></i> <span>Sincronizado</span>';
+                } else {
+                    produtos = [];
+                    renderProdutos('todos');
+                }
+                
+                loading.classList.remove('active');
+            }, function(error) {
+                loading.classList.remove('active');
+                indicator.className = 'sync-indicator offline';
+                indicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro</span>';
+            });
+        }
+
+        function renderProdutos(filtro, subcategoria) {
+            const grid = document.getElementById('produtosGrid');
+            grid.innerHTML = '';
+            
+            if (produtos.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">Nenhum produto cadastrado.</div>';
+                return;
+            }
+            
+            let filtrados = produtos;
+            
+            if (filtro !== 'todos') {
+                filtrados = produtos.filter(p => p.ambiente === filtro);
+                if (subcategoria) {
+                    filtrados = filtrados.filter(p => p.subcategoria === subcategoria);
+                }
+            }
+            
+            if (filtrados.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">Nenhum produto nesta categoria.</div>';
+                return;
+            }
+            
+            filtrados.forEach(produto => {
+                const card = document.createElement('div');
+                card.className = 'produto-card';
+                card.onclick = () => openModal(produto);
+                
+                const cores = produto.cores || [];
+                const coresHtml = cores.slice(0, 4).map(cor => 
+                    `<span class="color-dot" style="background-color: ${getColorCode(cor)}" title="${cor}"></span>`
+                ).join('');
+                
+                const imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : '';
+                const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f5f5f5' width='400' height='300'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle'%3ESem Imagem%3C/text%3E%3C/svg%3E";
+                
+                card.innerHTML = `
+                    <div class="produto-image">
+                        <img src="${imgSrc}" alt="${produto.nome || 'Produto'}" onerror="this.src='${svgPlaceholder}'">
+                    </div>
+                    <div class="produto-info">
+                        <h3>${produto.nome || 'Produto'}</h3>
+                        <p class="produto-price">R$ ${(produto.preco || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                        <div class="produto-colors">${coresHtml}</div>
+                        <button class="produto-btn">Ver Detalhes <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></button>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+            
+            document.querySelectorAll('.ambiente-btn').forEach(btn => {
+                btn.classList.remove('active');
+                const onclick = btn.getAttribute('onclick');
+                if (filtro === 'todos' && onclick && onclick.includes("'todos'")) {
+                    btn.classList.add('active');
+                } else if (filtro !== 'todos' && onclick && onclick.includes("'" + filtro + "'")) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function filtrarProdutos(ambiente) {
+            renderProdutos(ambiente);
+        }
+
+        function filtrarSubcategoria(ambiente, subcategoria) {
+            if (event) event.stopPropagation();
+            renderProdutos(ambiente, subcategoria);
+        }
+
+        function openModal(produto) {
+            currentProduto = produto;
+            currentImageIndex = 0;
+            
+            document.getElementById('modalTitle').textContent = produto.nome || 'Produto';
+            document.getElementById('modalPrice').textContent = 'R$ ' + (produto.preco || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            
+            const dims = (produto.dimensoes || '- x - x -').split(' x ');
+            document.getElementById('dimLargura').textContent = dims[0] || '-';
+            document.getElementById('dimAltura').textContent = dims[1] || '-';
+            document.getElementById('dimProfundidade').textContent = dims[2] || '-';
+            
+            const disp = document.getElementById('modalDisponibilidade');
+            if (produto.disponibilidade === 'pronta-entrega') {
+                disp.innerHTML = '<div class="disponibilidade-modal"><i class="fas fa-check-circle"></i> PRONTA ENTREGA</div>';
+            } else if (produto.disponibilidade === 'sob-encomenda') {
+                disp.innerHTML = '<div class="disponibilidade-modal"><i class="fas fa-clock"></i> SOB ENCOMENDA</div>';
+            } else {
+                disp.innerHTML = '';
+            }
+            
+            const cores = produto.cores || [];
+            document.getElementById('colorOptions').innerHTML = cores.map((cor, idx) => 
+                `<span class="color-option ${idx === 0 ? 'active' : ''}" onclick="selectColor(this)">${cor}</span>`
+            ).join('');
+            
+            updateGallery();
+            document.getElementById('produtoModal').classList.add('active');
+        }
+
+        function updateGallery() {
+            if (!currentProduto) return;
+            const imgs = currentProduto.imagens || [];
+            document.getElementById('modalMainImage').src = imgs[currentImageIndex] || '';
+            document.getElementById('galleryThumbs').innerHTML = imgs.map((img, idx) => 
+                `<img src="${img}" class="${idx === currentImageIndex ? 'active' : ''}" onclick="setImage(${idx})">`
+            ).join('');
+        }
+
+        function changeImage(dir) {
+            const imgs = currentProduto.imagens || [];
+            currentImageIndex = (currentImageIndex + dir + imgs.length) % imgs.length;
+            updateGallery();
+        }
+
+        function setImage(idx) {
+            currentImageIndex = idx;
+            updateGallery();
+        }
+
+        function closeModal() {
+            document.getElementById('produtoModal').classList.remove('active');
+            currentProduto = null;
+        }
+
+        function selectColor(el) {
+            document.querySelectorAll('.color-option').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function enviarWhatsApp() {
+            if (!currentProduto) return;
+            
+            const cor = document.querySelector('.color-option.active')?.textContent || (currentProduto.cores || [])[0] || '';
+            const disp = currentProduto.disponibilidade === 'pronta-entrega' ? '*Pronta Entrega* ✅' : '*Sob Encomenda* ⏰';
+            const cod = currentProduto.codigo || 'N/A';
+            
+            const mensagem = `*Ribeiro Móveis e Colchões* 👑\n\nOlá! Tenho interesse no produto:\n\n📦 *${currentProduto.nome}*\n🎨 Cor: ${cor}\n${disp}\n🏷️ Código: ${cod}\n\nPor favor, me envie mais informações`;
+            
+            const mensagemCodificada = encodeURIComponent(mensagem);
+            const numero = '5512991652100';
+            
+            const linkWhatsApp = `https://wa.me/${numero}?text=${mensagemCodificada}`;
+            
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            
+            if (isIOS) {
+                window.location.href = linkWhatsApp;
+            } else {
+                window.open(linkWhatsApp, '_blank');
+            }
+        }
+
+        function getColorCode(cor) {
+            const cores = {
+                'marrom': '#8B4513', 'bege': '#F5F5DC', 'cinza': '#808080',
+                'branco': '#FFFFFF', 'preto': '#000000', 'madeira': '#DEB887',
+                'carvalho': '#D2691E', 'nogueira': '#654321', 'vinho': '#722F37',
+                'azul': '#0000FF', 'vermelho': '#FF0000', 'verde': '#008000',
+                'amarelo': '#FFFF00', 'rosa': '#FFC0CB', 'roxo': '#800080',
+                'laranja': '#FFA500', 'off white': '#F5F5F5', 'offwhite': '#F5F5F5'
+            };
+            return cores[(cor || '').toLowerCase().trim()] || '#ddd';
+        }
+
+        function toggleMenu() {
+            document.getElementById('mainNav').classList.toggle('active');
+        }
+
+        function closeMenu() {
+            document.getElementById('mainNav').classList.remove('active');
+        }
+
+        document.getElementById('produtoModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>
