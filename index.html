@@ -11,13 +11,13 @@
     <meta name="author" content="Ribeiro Móveis">
     <meta name="robots" content="index, follow">
     
-    <!-- 🔥 META TAGS OPEN GRAPH - PARA NETLIFY -->
+    <!-- 🔥 META TAGS OPEN GRAPH - ATUALIZADO PARA VERCEL -->
     <meta property="og:title" content="Ribeiro Móveis e Colchões">
     <meta property="og:description" content="Móveis de qualidade para seu lar. Frete e montagem grátis! 30 anos de tradição.">
-    <meta property="og:image" content="https://ribeiromoveis.netlify.app/imagens/logo-ribeiro.png">
+    <meta property="og:image" content="https://ribeiro-moveis.vercel.app/imagens/logo-ribeiro.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:url" content="https://ribeiromoveis.netlify.app/">
+    <meta property="og:url" content="https://ribeiro-moveis.vercel.app/">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="pt_BR">
     <meta property="og:site_name" content="Ribeiro Móveis e Colchões">
@@ -25,7 +25,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Ribeiro Móveis e Colchões">
     <meta name="twitter:description" content="Móveis de qualidade para seu lar. Frete e montagem grátis!">
-    <meta name="twitter:image" content="https://ribeiromoveis.netlify.app/imagens/logo-ribeiro.png">
+    <meta name="twitter:image" content="https://ribeiro-moveis.vercel.app/imagens/logo-ribeiro.png">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -34,12 +34,12 @@
     <link rel="icon" type="image/png" sizes="32x32" href="imagens/logo-header.png">
     <link rel="apple-touch-icon" sizes="180x180" href="imagens/logo-header.png">
     
-    <link rel="canonical" href="https://ribeiromoveis.netlify.app/">
+    <link rel="canonical" href="https://ribeiro-moveis.vercel.app/">
     
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- FIREBASE SDK (apenas para banco de dados) -->
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
@@ -90,7 +90,6 @@
 
         .logo { display: flex; align-items: center; }
 
-        /* LOGO DA NAVBAR - A PEQUENA */
         .logo-header-img {
             height: 120px;
             width: auto;
@@ -162,7 +161,6 @@
             max-width: 600px;
         }
 
-        /* LOGO PRINCIPAL DO CENTRO - A GRANDE */
         .hero-logo-wrap {
             width: 300px;
             max-width: 80vw;
@@ -395,25 +393,6 @@
             background: var(--vinho-escuro);
             color: var(--dourado);
         }
-
-        .sync-indicator {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.3s;
-        }
-
-        .sync-indicator.online { background: #25D366; color: white; }
-        .sync-indicator.offline { background: #dc3545; color: white; }
-        .sync-indicator.syncing { background: var(--dourado); color: var(--vinho); }
 
         .loading-overlay {
             position: fixed;
@@ -860,6 +839,7 @@
             z-index: 999;
         }
 
+        /* 🔥 CORREÇÃO MENU MOBILE */
         @media (max-width: 768px) {
             .header { height: 70px; }
             .logo-header-img { height: 90px; }
@@ -908,12 +888,25 @@
             .ambientes-menu { gap: 6px; }
             .ambiente-btn { padding: 8px 12px; font-size: 0.7rem; }
             
+            /* 🔥 MENU DROPDOWN MOBILE CORRIGIDO */
             .subcategorias-dropdown {
-                position: fixed;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 90%;
-                max-width: 280px;
+                position: fixed !important;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: 90% !important;
+                max-width: 280px !important;
+                max-height: 60vh !important;
+                overflow-y: auto !important;
+                z-index: 999999 !important;
+                background: white !important;
+                border: 3px solid var(--dourado) !important;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+                display: none;
+            }
+
+            .ambiente-item.active .subcategorias-dropdown {
+                display: block !important;
             }
             
             .produtos-grid {
@@ -928,11 +921,6 @@
             .modal-body { grid-template-columns: 1fr; }
             .gallery-main { height: 220px; }
             .dimensoes-row { flex-direction: column; gap: 8px; }
-            .sync-indicator {
-                bottom: 80px;
-                right: 10px;
-                font-size: 0.7rem;
-            }
         }
 
         @media (max-width: 480px) {
@@ -942,12 +930,6 @@
     </style>
 </head>
 <body>
-    <!-- LINKS INVISÍVEIS PARA FORÇAR RECONHECIMENTO DO WHATSAPP -->
-    <div style="display:none; visibility:hidden; height:0; width:0; overflow:hidden;">
-        <a href="https://ribeiromoveis.netlify.app/">Ribeiro Móveis</a>
-        <a href="https://ribeiromoveis.netlify.app/">Ribeiro Móveis</a>
-    </div>
-
     <!-- Loading -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
@@ -1007,86 +989,86 @@
                         <i class="fas fa-th-large"></i> Todos
                     </button>
                     
-                    <div class="ambiente-item">
-                        <button class="ambiente-btn" onclick="filtrarProdutos('dormitorio')">
+                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+                        <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('dormitorio')">
                             <i class="fas fa-bed"></i> Dormitório <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Box')">Box</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Box Baú')">Box Baú</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Cabeceira')">Cabeceira</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Cama')">Cama</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Colchão')">Colchão</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Cômoda')">Cômoda</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Guarda-Roupa')">Guarda-Roupa</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Mesa de Cabeceira')">Mesa de Cabeceira</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('dormitorio', 'Recamier')">Recamier</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Box')">Box</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Box Baú')">Box Baú</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cabeceira')">Cabeceira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cama')">Cama</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Colchão')">Colchão</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cômoda')">Cômoda</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Guarda-Roupa')">Guarda-Roupa</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Mesa de Cabeceira')">Mesa de Cabeceira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Recamier')">Recamier</div>
                         </div>
                     </div>
                     
-                    <div class="ambiente-item">
-                        <button class="ambiente-btn" onclick="filtrarProdutos('cozinha')">
+                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+                        <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('cozinha')">
                             <i class="fas fa-utensils"></i> Cozinha <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Armário')">Armário</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Cadeira')">Cadeira</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Conj. Mesa de Jantar')">Conj. Mesa de Jantar</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('cozinha', 'Mesa')">Mesa</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Armário')">Armário</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Cadeira')">Cadeira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Conj. Mesa de Jantar')">Conj. Mesa de Jantar</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Mesa')">Mesa</div>
                         </div>
                     </div>
                     
-                    <div class="ambiente-item">
-                        <button class="ambiente-btn" onclick="filtrarProdutos('sala')">
+                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+                        <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('sala')">
                             <i class="fas fa-couch"></i> Sala <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Aparador')">Aparador</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Buffet')">Buffet</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Cristaleira')">Cristaleira</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Home')">Home</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Mesa de Centro')">Mesa de Centro</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Painel')">Painel</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Poltrona')">Poltrona</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Rack')">Rack</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('sala', 'Sofá')">Sofá</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Aparador')">Aparador</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Buffet')">Buffet</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Cristaleira')">Cristaleira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Home')">Home</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Mesa de Centro')">Mesa de Centro</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Painel')">Painel</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Poltrona')">Poltrona</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Rack')">Rack</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Sofá')">Sofá</div>
                         </div>
                     </div>
                     
-                    <div class="ambiente-item">
-                        <button class="ambiente-btn" onclick="filtrarProdutos('colchoes')">
+                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+                        <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('colchoes')">
                             <i class="fas fa-mattress-pillow"></i> Colchões <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Solteiro')">Solteiro</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Solteiro King')">Solteiro King</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Casal')">Casal</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'Queen')">Queen</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('colchoes', 'King')">King</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Solteiro')">Solteiro</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Solteiro King')">Solteiro King</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Casal')">Casal</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Queen')">Queen</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'King')">King</div>
                         </div>
                     </div>
                     
-                    <div class="ambiente-item">
-                        <button class="ambiente-btn" onclick="filtrarProdutos('complementos')">
+                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+                        <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('complementos')">
                             <i class="fas fa-plus-circle"></i> Complementos <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Mesa de Computador')">Mesa de Computador</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Multiuso')">Multiuso</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Multiuso Área Serviço')">Multiuso Área Serviço</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Penteadeira')">Penteadeira</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('complementos', 'Puff')">Puff</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Mesa de Computador')">Mesa de Computador</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Multiuso')">Multiuso</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Multiuso Área Serviço')">Multiuso Área Serviço</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Penteadeira')">Penteadeira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Puff')">Puff</div>
                         </div>
                     </div>
                     
-                    <div class="ambiente-item">
-                        <button class="ambiente-btn" onclick="filtrarProdutos('infantil')">
+                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+                        <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('infantil')">
                             <i class="fas fa-baby"></i> Infantil <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('infantil', 'Berço')">Berço</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('infantil', 'Cômoda')">Cômoda</div>
-                            <div class="subcategoria-item" onclick="filtrarSubcategoria('infantil', 'Guarda-Roupa')">Guarda-Roupa</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Berço')">Berço</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Cômoda')">Cômoda</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Guarda-Roupa')">Guarda-Roupa</div>
                         </div>
                     </div>
                 </div>
@@ -1270,10 +1252,6 @@
 
     <a href="admin.html" class="admin-link-sutil">adm</a>
 
-    <div id="syncIndicator" class="sync-indicator offline">
-        <i class="fas fa-wifi"></i> <span>Offline</span>
-    </div>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBxlhL9IMFvUKAGxYikutb1BU2WGnC_t5E",
@@ -1293,27 +1271,12 @@
         let currentProduto = null;
 
         document.addEventListener('DOMContentLoaded', function() {
-            db.ref('.info/connected').on('value', function(snap) {
-                const indicator = document.getElementById('syncIndicator');
-                if (snap.val() === true) {
-                    indicator.className = 'sync-indicator online';
-                    indicator.innerHTML = '<i class="fas fa-wifi"></i> <span>Online</span>';
-                } else {
-                    indicator.className = 'sync-indicator offline';
-                    indicator.innerHTML = '<i class="fas fa-wifi-slash"></i> <span>Offline</span>';
-                }
-            });
-
             carregarProdutosFirebase();
         });
 
         function carregarProdutosFirebase() {
             const loading = document.getElementById('loadingOverlay');
-            const indicator = document.getElementById('syncIndicator');
-            
             loading.classList.add('active');
-            indicator.className = 'sync-indicator syncing';
-            indicator.innerHTML = '<i class="fas fa-sync fa-spin"></i> <span>Sincronizando...</span>';
 
             const backup = localStorage.getItem('produtos_backup');
             if (backup) {
@@ -1332,11 +1295,13 @@
                         return { id: key, ...dados[key] };
                     });
                     
+                    // 🔥 ORDENAR PRODUTOS PELA ORDEM DEFINIDA NO ADMIN
+                    produtos.sort(function(a, b) {
+                        return (a.ordem || 0) - (b.ordem || 0);
+                    });
+                    
                     localStorage.setItem('produtos_backup', JSON.stringify(produtos));
                     renderProdutos('todos');
-                    
-                    indicator.className = 'sync-indicator online';
-                    indicator.innerHTML = '<i class="fas fa-wifi"></i> <span>Sincronizado</span>';
                 } else {
                     produtos = [];
                     renderProdutos('todos');
@@ -1345,8 +1310,6 @@
                 loading.classList.remove('active');
             }, function(error) {
                 loading.classList.remove('active');
-                indicator.className = 'sync-indicator offline';
-                indicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro</span>';
             });
         }
 
@@ -1417,8 +1380,20 @@
         }
 
         function filtrarSubcategoria(ambiente, subcategoria) {
-            if (event) event.stopPropagation();
             renderProdutos(ambiente, subcategoria);
+        }
+
+        // 🔥 FUNÇÃO PARA ABRIR/FECHAR DROPDOWN NO MOBILE
+        function toggleDropdown(element) {
+            // Fecha todos os outros dropdowns
+            document.querySelectorAll('.ambiente-item').forEach(item => {
+                if (item !== element) {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // Toggle no atual
+            element.classList.toggle('active');
         }
 
         function openModal(produto) {
@@ -1495,13 +1470,7 @@
             
             const linkWhatsApp = `https://wa.me/${numero}?text=${mensagemCodificada}`;
             
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            
-            if (isIOS) {
-                window.location.href = linkWhatsApp;
-            } else {
-                window.open(linkWhatsApp, '_blank');
-            }
+            window.open(linkWhatsApp, '_blank');
         }
 
         function getColorCode(cor) {
@@ -1527,7 +1496,15 @@
         document.getElementById('produtoModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });
+
+        // Fecha dropdown ao clicar fora no mobile
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.ambiente-item')) {
+                document.querySelectorAll('.ambiente-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+            }
+        });
     </script>
 </body>
-
 </html>
