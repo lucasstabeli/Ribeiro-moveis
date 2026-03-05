@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- 🔥 FIREBASE SDK -->
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
@@ -426,10 +426,16 @@
             margin-bottom: 8px;
             background: white;
             transition: all 0.3s;
+            cursor: move;
         }
         
         .produto-item-compact:hover {
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .produto-item-compact.dragging {
+            opacity: 0.5;
+            border: 2px dashed var(--dourado);
         }
         
         .produto-item-compact img {
@@ -565,33 +571,15 @@
             margin-bottom: 15px;
         }
         
-        .sync-status {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .drag-handle {
+            color: var(--dourado);
+            font-size: 1.2rem;
+            margin-right: 10px;
+            cursor: grab;
         }
         
-        .sync-status.online {
-            background: #25D366;
-            color: white;
-        }
-        
-        .sync-status.offline {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .sync-status.syncing {
-            background: var(--dourado);
-            color: var(--vinho);
+        .drag-handle:active {
+            cursor: grabbing;
         }
         
         @media (max-width: 900px) {
@@ -775,12 +763,8 @@
         </div>
     </div>
 
-    <div id="syncStatus" class="sync-status offline">
-        <i class="fas fa-wifi"></i> <span>Offline</span>
-    </div>
-
     <script>
-        // 🔥 CONFIGURAÇÃO DO FIREBASE (use os dados da sua foto!)
+        // 🔥 CONFIGURAÇÃO DO FIREBASE ATUALIZADA
         const firebaseConfig = {
             apiKey: "AIzaSyBxlhL9IMFvUKAGxYikutb1BU2WGnC_t5E",
             authDomain: "ribeiro-moveis.firebaseapp.com",
@@ -813,18 +797,6 @@
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             storage = firebase.storage();
-            
-            // Monitora status da conexão
-            db.ref('.info/connected').on('value', function(snap) {
-                const status = document.getElementById('syncStatus');
-                if (snap.val() === true) {
-                    status.className = 'sync-status online';
-                    status.innerHTML = '<i class="fas fa-wifi"></i> <span>Online</span>';
-                } else {
-                    status.className = 'sync-status offline';
-                    status.innerHTML = '<i class="fas fa-wifi-slash"></i> <span>Offline</span>';
-                }
-            });
 
             if (localStorage.getItem('logado') === 'true') {
                 mostrarPainel();
@@ -853,20 +825,15 @@
             carregarProdutosFirebase();
         }
 
-        // 🔥 CARREGA PRODUTOS EM TEMPO REAL DO FIREBASE
         function carregarProdutosFirebase() {
-            const status = document.getElementById('syncStatus');
-            status.className = 'sync-status syncing';
-            status.innerHTML = '<i class="fas fa-sync fa-spin"></i> <span>Sincronizando...</span>';
-
-            // Backup local primeiro
             const backup = localStorage.getItem('produtos_backup');
             if (backup) {
-                produtos = JSON.parse(backup);
-                atualizarLista();
+                try {
+                    produtos = JSON.parse(backup);
+                    atualizarLista();
+                } catch (e) {}
             }
 
-            // Escuta em tempo real
             db.ref('produtos').on('value', function(snapshot) {
                 const dados = snapshot.val();
                 if (dados) {
@@ -876,12 +843,6 @@
                     localStorage.setItem('produtos_backup', JSON.stringify(produtos));
                     atualizarLista();
                 }
-                status.className = 'sync-status online';
-                status.innerHTML = '<i class="fas fa-wifi"></i> <span>Sincronizado</span>';
-            }, function(error) {
-                console.error('Erro Firebase:', error);
-                status.className = 'sync-status offline';
-                status.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Erro</span>';
             });
         }
 
@@ -1042,7 +1003,6 @@
             document.querySelector('.disp-option-compact.' + (tipo === 'pronta-entrega' ? 'pronta' : 'encomenda')).classList.add('selected');
         }
 
-        // 🔥 SALVAR NO FIREBASE (SINCRONIZA EM TEMPO REAL!)
         async function salvarProduto(event) {
             event.preventDefault();
             
@@ -1061,7 +1021,6 @@
             const id = document.getElementById('produtoId').value;
             let imagens = imagensTemp.length > 0 ? [...imagensTemp] : [];
             
-            // Se está editando e não adicionou novas imagens, mantém as antigas
             if (id && imagens.length === 0) {
                 const produtoAntigo = produtos.find(p => p.id == id);
                 if (produtoAntigo) imagens = [...produtoAntigo.imagens];
@@ -1081,17 +1040,21 @@
                           (document.getElementById('dimAltura').value || '-') + ' x ' + 
                           (document.getElementById('dimProfundidade').value || '-'),
                 codigo: codigo,
+                ordem: 0, // 🔥 ADICIONA ORDEM PADRÃO
                 dataAtualizacao: Date.now()
             };
 
             try {
                 if (id) {
-                    // Editar existente
+                    const produtoAntigo = produtos.find(p => p.id == id);
+                    if (produtoAntigo && produtoAntigo.ordem !== undefined) {
+                        produto.ordem = produtoAntigo.ordem;
+                    }
                     await db.ref('produtos/' + id).update(produto);
                 } else {
-                    // Novo produto
                     const novoId = db.ref('produtos').push().key;
                     produto.id = novoId;
+                    produto.ordem = produtos.length; // 🔥 NOVO PRODUTO VAI PARA O FINAL
                     await db.ref('produtos/' + novoId).set(produto);
                 }
                 
@@ -1154,7 +1117,6 @@
             document.querySelector('.tab-btn-compact').click();
         }
 
-        // 🔥 EXCLUIR DO FIREBASE
         async function excluirProduto(id) {
             if (!confirm('Tem certeza que deseja excluir este produto?')) return;
             
@@ -1200,28 +1162,43 @@
             const container = document.getElementById('ordenarLista');
             let filtrados = ordenacaoAtual === 'todos' ? [...produtos] : produtos.filter(p => p.ambiente === ordenacaoAtual);
             
+            // 🔥 ORDENA PELO CAMPO ORDEM
+            filtrados.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+            
             if (filtrados.length === 0) {
                 container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; color: var(--dourado);"></i><p>Nenhum produto nesta categoria</p></div>';
                 return;
             }
             
-            container.innerHTML = filtrados.map(produto => '<div class="produto-item-compact" draggable="true" data-id="' + produto.id + '" style="cursor: move;"><i class="fas fa-grip-vertical" style="color: var(--dourado); font-size: 1.2rem; margin-right: 10px;"></i><img src="' + produto.imagens[0] + '" alt="' + produto.nome + '" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 2px solid var(--dourado);"><div style="flex: 1;"><h4 style="color: var(--vinho); font-size: 0.95rem; margin-bottom: 3px;">' + produto.nome + '</h4><div style="font-size: 0.8rem; color: #666;"><span class="codigo-badge-compact">' + (produto.codigo || '----') + '</span>' + produto.ambiente + ' | ' + produto.subcategoria + '</div></div><div style="color: #25D366; font-weight: bold;">R$ ' + produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</div></div>').join('');
+            container.innerHTML = filtrados.map((produto, index) => '<div class="produto-item-compact" draggable="true" data-id="' + produto.id + '" data-index="' + index + '"><i class="fas fa-grip-vertical drag-handle"></i><img src="' + produto.imagens[0] + '" alt="' + produto.nome + '" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 2px solid var(--dourado);"><div style="flex: 1;"><h4 style="color: var(--vinho); font-size: 0.95rem; margin-bottom: 3px;">' + produto.nome + '</h4><div style="font-size: 0.8rem; color: #666;"><span class="codigo-badge-compact">' + (produto.codigo || '----') + '</span>' + produto.ambiente + ' | ' + produto.subcategoria + '</div></div><div style="color: #25D366; font-weight: bold;">R$ ' + produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</div></div>').join('');
             
+            // 🔥 DRAG AND DROP FUNCIONAL
             let draggedItem = null;
-            document.querySelectorAll('.produto-item-compact[draggable="true"]').forEach(item => {
+            let draggedIndex = null;
+            
+            container.querySelectorAll('.produto-item-compact').forEach((item, index) => {
                 item.addEventListener('dragstart', function(e) {
                     draggedItem = this;
-                    this.style.opacity = '0.5';
+                    draggedIndex = parseInt(this.getAttribute('data-index'));
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
                 });
+                
                 item.addEventListener('dragend', function() {
-                    this.style.opacity = '1';
+                    this.classList.remove('dragging');
                     draggedItem = null;
+                    draggedIndex = null;
                 });
+                
                 item.addEventListener('dragover', function(e) {
                     e.preventDefault();
-                    if (this === draggedItem) return;
+                    e.dataTransfer.dropEffect = 'move';
+                    
+                    if (!draggedItem || this === draggedItem) return;
+                    
                     const rect = this.getBoundingClientRect();
                     const midY = rect.top + rect.height / 2;
+                    
                     if (e.clientY < midY) {
                         container.insertBefore(draggedItem, this);
                     } else {
@@ -1231,7 +1208,7 @@
             });
         }
 
-        // 🔥 SALVAR ORDEM NO FIREBASE
+        // 🔥 SALVAR ORDEM CORRETAMENTE NO FIREBASE
         async function salvarOrdem() {
             const container = document.getElementById('ordenarLista');
             const items = container.querySelectorAll('.produto-item-compact');
@@ -1241,16 +1218,30 @@
             
             try {
                 const atualizacoes = {};
+                
                 items.forEach((item, index) => {
                     const id = item.getAttribute('data-id');
+                    // Atualiza o campo 'ordem' de cada produto
                     atualizacoes['produtos/' + id + '/ordem'] = index;
                 });
                 
                 await db.ref().update(atualizacoes);
+                
+                // Atualiza a lista local
+                items.forEach((item, index) => {
+                    const id = item.getAttribute('data-id');
+                    const produto = produtos.find(p => p.id === id);
+                    if (produto) {
+                        produto.ordem = index;
+                    }
+                });
+                
+                localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+                
                 alert('✅ Ordem salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar ordem:', error);
-                alert('❌ Erro ao salvar ordem. Tente novamente.');
+                alert('❌ Erro ao salvar ordem: ' + error.message);
             } finally {
                 document.getElementById('loadingOverlay').classList.remove('active');
             }
@@ -1261,6 +1252,4 @@
         });
     </script>
 </body>
-
 </html>
-
