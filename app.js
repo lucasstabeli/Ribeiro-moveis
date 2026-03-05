@@ -14,7 +14,7 @@ const firebaseConfig = {
     authDomain: "ribeiro-moveis.firebaseapp.com",
     databaseURL: "https://ribeiro-moveis-default-rtdb.firebaseio.com",
     projectId: "ribeiro-moveis",
-    storageBucket: "ribeiro-moveis.appspot.com",
+    storageBucket: "ribeiro-moveis.firebasestorage.app",
     messagingSenderId: "215506296403",
     appId: "1:215506296403:web:b298fccdfd65d20001b0a6"
 };
@@ -318,4 +318,5 @@ window.onclick = function(event) {
 
 var style = document.createElement('style');
 style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+
 document.head.appendChild(style);
