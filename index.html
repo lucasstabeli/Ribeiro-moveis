@@ -767,16 +767,17 @@
         /* CORREÇÃO: DIMENSÕES EM COLUNA NO MOBILE */
         .dimensoes-row {
             display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
+            gap: 8px;
+            flex-wrap: nowrap;  /* importante! */
+            overflow-x: auto;   /* scroll horizontal se não couber */
         }
-
+        
         .dimensao-item-compacta {
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 100px;
+            gap: 5px;
+            white-space: nowrap;  /* não quebra texto */
+            font-size: 0.85rem;
         }
 
         .dimensao-item-compacta i {
@@ -1559,3 +1560,4 @@
     </script>
 </body>
 </html>
+
