@@ -1100,15 +1100,20 @@ body {
         gap: 10px;
     }
     
-    .dimensoes-row { 
-        flex-direction: column; 
-        gap: 8px; 
-    }
-    
-    .dimensao-item-compacta {
-        min-width: 100%;
-    }
-    
+    .dimensoes-row {
+       display: flex;
+       gap: 8px;
+       flex-wrap: nowrap;  /* importante! */
+       overflow-x: auto;   /* scroll horizontal se não couber */
+   }
+   
+   .dimensao-item-compacta {
+       display: flex;
+       align-items: center;
+       gap: 5px;
+       white-space: nowrap;  /* não quebra texto */
+       font-size: 0.85rem;
+   }
     /* WhatsApp Float Mobile */
     .whatsapp-float {
         width: 50px;
@@ -1403,4 +1408,5 @@ section {
 .produtos-grid {
     position: relative !important;
     z-index: 0 !important;
+
 }
