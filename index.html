@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    
+
     <title>Ribeiro Móveis e Colchões | São José dos Campos</title>
-    
+
     <meta name="description" content="Móveis de qualidade para seu lar. Frete e montagem grátis em São José dos Campos. 30 anos de tradição.">
     <meta name="keywords" content="móveis, colchões, São José dos Campos, frete grátis">
     <meta name="author" content="Ribeiro Móveis">
     <meta name="robots" content="index, follow">
-    
-    <!-- 🔥 META TAGS OPEN GRAPH - ATUALIZADO PARA VERCEL -->
+
     <meta property="og:title" content="Ribeiro Móveis e Colchões">
     <meta property="og:description" content="Móveis de qualidade para seu lar. Frete e montagem grátis! 30 anos de tradição.">
     <meta property="og:image" content="https://ribeiro-moveis.vercel.app/imagens/logo-ribeiro.png">
@@ -21,28 +20,27 @@
     <meta property="og:type" content="website">
     <meta property="og:locale" content="pt_BR">
     <meta property="og:site_name" content="Ribeiro Móveis e Colchões">
-    
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Ribeiro Móveis e Colchões">
     <meta name="twitter:description" content="Móveis de qualidade para seu lar. Frete e montagem grátis!">
     <meta name="twitter:image" content="https://ribeiro-moveis.vercel.app/imagens/logo-ribeiro.png">
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Ribeiro Móveis">
-    
+
     <link rel="icon" type="image/png" sizes="32x32" href="imagens/logo-header.png">
     <link rel="apple-touch-icon" sizes="180x180" href="imagens/logo-header.png">
-    
+
     <link rel="canonical" href="https://ribeiro-moveis.vercel.app/">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- FIREBASE SDK -->
+
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
+
     <style>
         :root {
             --vinho: #5D1A1A;
@@ -55,7 +53,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        
+
         body {
             font-family: 'Lato', sans-serif;
             background: var(--creme);
@@ -213,7 +211,6 @@
             padding: 60px 0;
             background: var(--branco);
             position: relative;
-            z-index: 1;
         }
 
         .section-header {
@@ -243,6 +240,7 @@
 
         .gold-divider span { color: var(--dourado); }
 
+        /* CORREÇÃO DROPDOWN - Z-INDEX E POSICIONAMENTO */
         .ambientes-menu {
             display: flex;
             justify-content: center;
@@ -252,10 +250,11 @@
             flex-wrap: wrap;
             padding: 0 10px;
             position: relative;
-            z-index: 100;
         }
 
-        .ambiente-item { position: relative; z-index: 101; }
+        .ambiente-item { 
+            position: relative; 
+        }
 
         .ambiente-btn {
             padding: 10px 14px;
@@ -282,7 +281,8 @@
         .subcategorias-dropdown {
             display: none;
             position: absolute;
-            top: 100%; left: 0;
+            top: 100%; 
+            left: 0;
             background: white;
             border: 2px solid var(--dourado);
             border-top: none;
@@ -615,6 +615,7 @@
             z-index: 100;
         }
 
+        /* CORREÇÃO MODAL - SCROLL E DIMENSÕES */
         .modal {
             display: none;
             position: fixed;
@@ -622,8 +623,8 @@
             width: 100%; height: 100%;
             background: rgba(61, 15, 15, 0.95);
             z-index: 2000;
-            padding: 20px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .modal.active { display: block; }
@@ -763,6 +764,7 @@
             font-size: 0.9rem;
         }
 
+        /* CORREÇÃO: DIMENSÕES EM COLUNA NO MOBILE */
         .dimensoes-row {
             display: flex;
             gap: 15px;
@@ -839,12 +841,12 @@
             z-index: 999;
         }
 
-        /* 🔥 CORREÇÃO MENU MOBILE */
+        /* CORREÇÕES MOBILE */
         @media (max-width: 768px) {
             .header { height: 70px; }
             .logo-header-img { height: 90px; }
             main { padding-top: 70px; }
-            
+
             .nav { 
                 display: none; 
                 position: fixed;
@@ -857,38 +859,38 @@
                 gap: 15px;
                 z-index: 999;
             }
-            
+
             .nav.active { display: flex; }
             .menu-mobile { display: block; }
-            
+
             .hero {
                 min-height: calc(100vh - 70px);
                 padding: 30px 15px;
             }
-            
+
             .frete-badge { 
                 position: absolute; 
                 top: 15px; right: 15px; 
                 font-size: 0.75rem;
                 padding: 10px 15px;
             }
-            
+
             .hero-logo-wrap { 
                 width: 220px; 
                 margin-top: 40px;
             }
-            
+
             .gold-line {
                 width: 100px;
                 margin-bottom: 15px;
             }
-            
+
             .produtos { padding: 40px 0; }
             .section-header h2 { font-size: 1.6rem; }
             .ambientes-menu { gap: 6px; }
             .ambiente-btn { padding: 8px 12px; font-size: 0.7rem; }
-            
-            /* 🔥 MENU DROPDOWN MOBILE CORRIGIDO */
+
+            /* CORREÇÃO DROPDOWN MOBILE */
             .subcategorias-dropdown {
                 position: fixed !important;
                 left: 50% !important;
@@ -908,19 +910,57 @@
             .ambiente-item.active .subcategorias-dropdown {
                 display: block !important;
             }
-            
+
             .produtos-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 15px;
             }
-            
+
             .produto-image { height: 160px; }
             .sobre-content { grid-template-columns: 1fr; gap: 30px; }
             .contato-grid { grid-template-columns: 1fr; gap: 25px; }
             .contato-map { min-height: 250px; order: -1; }
-            .modal-body { grid-template-columns: 1fr; }
-            .gallery-main { height: 220px; }
-            .dimensoes-row { flex-direction: column; gap: 8px; }
+
+            /* CORREÇÃO MODAL MOBILE - SCROLL E DIMENSÕES */
+            .modal {
+                padding: 0;
+                background: rgba(61, 15, 15, 1);
+            }
+
+            .modal-content {
+                margin: 0;
+                min-height: 100vh;
+                border: none;
+                border-top: 3px solid var(--dourado);
+                border-bottom: 3px solid var(--dourado);
+            }
+
+            .modal-body { 
+                grid-template-columns: 1fr; 
+            }
+
+            .modal-gallery {
+                padding: 15px;
+                padding-top: 60px;
+            }
+
+            .gallery-main { height: 250px; }
+
+            .modal-info { 
+                padding: 20px; 
+                padding-bottom: 100px;
+            }
+
+            /* CORREÇÃO: DIMENSÕES EM COLUNA */
+            .dimensoes-row { 
+                flex-direction: column; 
+                gap: 8px; 
+            }
+
+            .dimensao-item-compacta {
+                min-width: 100%;
+                padding: 5px 0;
+            }
         }
 
         @media (max-width: 480px) {
@@ -928,6 +968,7 @@
             .hero-logo-wrap { width: 180px; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
     <!-- Loading -->
@@ -942,14 +983,14 @@
             <a href="#" class="logo" onclick="window.scrollTo(0,0); return false;">
                 <img src="imagens/logo-header.png" alt="Ribeiro Móveis" class="logo-header-img" onerror="this.style.display='none'">
             </a>
-            
+
             <nav class="nav" id="mainNav">
                 <a href="#inicio" onclick="closeMenu()">Início</a>
                 <a href="#produtos" onclick="closeMenu()">Produtos</a>
                 <a href="#sobre" onclick="closeMenu()">Sobre</a>
                 <a href="#contato" onclick="closeMenu()">Contato</a>
             </nav>
-            
+
             <button class="menu-mobile" onclick="toggleMenu()">
                 <i class="fas fa-bars"></i>
             </button>
@@ -962,10 +1003,10 @@
                 <i class="fas fa-truck"></i>
                 <span>Frete e Montagem<br>Grátis</span>
             </div>
-            
+
             <div class="hero-content">
                 <div class="hero-logo-wrap">
-                    <img src="imagens/logo-ribeiro.png" alt="Ribeiro Móveis e Colchões" onerror="this.parentElement.innerHTML='<h1 style=\'font-size:2rem;color:var(--dourado);font-family:Playfair Display\'>RIBEIRO</h1>'">
+                    <img src="imagens/logo-ribeiro.png" alt="Ribeiro Móveis e Colchões" onerror="this.parentElement.innerHTML='<h1 style=font-size:2rem;color:var(--dourado);font-family:Playfair Display>RIBEIRO</h1>'">
                 </div>
                 <div class="gold-line"></div>
                 <p>Móveis de qualidade para seu lar</p>
@@ -983,13 +1024,13 @@
                         <div class="line"></div>
                     </div>
                 </div>
-                
+
                 <div class="ambientes-menu">
                     <button class="ambiente-btn active" onclick="filtrarProdutos('todos')">
                         <i class="fas fa-th-large"></i> Todos
                     </button>
-                    
-                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+
+                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('dormitorio')">
                             <i class="fas fa-bed"></i> Dormitório <i class="fas fa-chevron-down"></i>
                         </button>
@@ -1005,8 +1046,8 @@
                             <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Recamier')">Recamier</div>
                         </div>
                     </div>
-                    
-                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+
+                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('cozinha')">
                             <i class="fas fa-utensils"></i> Cozinha <i class="fas fa-chevron-down"></i>
                         </button>
@@ -1017,8 +1058,8 @@
                             <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Mesa')">Mesa</div>
                         </div>
                     </div>
-                    
-                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+
+                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('sala')">
                             <i class="fas fa-couch"></i> Sala <i class="fas fa-chevron-down"></i>
                         </button>
@@ -1034,8 +1075,8 @@
                             <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Sofá')">Sofá</div>
                         </div>
                     </div>
-                    
-                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+
+                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('colchoes')">
                             <i class="fas fa-mattress-pillow"></i> Colchões <i class="fas fa-chevron-down"></i>
                         </button>
@@ -1047,8 +1088,8 @@
                             <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'King')">King</div>
                         </div>
                     </div>
-                    
-                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+
+                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('complementos')">
                             <i class="fas fa-plus-circle"></i> Complementos <i class="fas fa-chevron-down"></i>
                         </button>
@@ -1060,8 +1101,8 @@
                             <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Puff')">Puff</div>
                         </div>
                     </div>
-                    
-                    <div class="ambiente-item" onclick="toggleDropdown(this)">
+
+                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('infantil')">
                             <i class="fas fa-baby"></i> Infantil <i class="fas fa-chevron-down"></i>
                         </button>
@@ -1085,7 +1126,7 @@
                         <p>Há mais de 30 anos, nossa história começou de forma simples, mas com um propósito muito claro: trabalhar com honestidade e entregar qualidade de verdade.</p>
                         <p>Tudo teve início quando o fundador da empresa começou vendendo móveis usados, escolhendo cada peça com cuidado e responsabilidade.</p>
                         <p>Hoje, seguimos firmes nos mesmos valores que construíram nossa trajetória: confiança, transparência e compromisso com cada cliente.</p>
-                        
+
                         <div class="sobre-stats">
                             <div class="stat">
                                 <span class="stat-num">30</span>
@@ -1097,7 +1138,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="sobre-image">
                         <img src="imagens/foto-loja.png" alt="Loja Ribeiro Móveis" onerror="this.style.display='none'">
                     </div>
@@ -1115,7 +1156,7 @@
                         <div class="line"></div>
                     </div>
                 </div>
-                
+
                 <div class="contato-grid">
                     <div class="contato-info">
                         <div class="info-card">
@@ -1125,7 +1166,7 @@
                             <h3>Endereço</h3>
                             <p>R. Felicio Jabbur Nasser, 540<br>Bairro Galo Branco<br>São José dos Campos - SP</p>
                         </div>
-                        
+
                         <div class="info-card">
                             <div class="info-icon">
                                 <i class="fas fa-phone-alt"></i>
@@ -1133,7 +1174,7 @@
                             <h3>Telefones</h3>
                             <p>(12) 3905-1136<br>(12) 99165-2100</p>
                         </div>
-                        
+
                         <div class="info-card">
                             <div class="info-icon">
                                 <i class="fas fa-clock"></i>
@@ -1142,7 +1183,7 @@
                             <p>Seg - Sex: 8:30h às 19h<br>Sáb: 8:30h às 16h</p>
                         </div>
                     </div>
-                    
+
                     <div class="contato-map">
                         <iframe 
                             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.296041358647!2d-45.771215!3d-23.1348!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDA4JzA1LjMiUyA0NcKwNDYnMTYuNCJX!5e0!3m2!1spt-BR!2sbr!4v1234567890" 
@@ -1165,20 +1206,20 @@
                 <div class="footer-logo">
                     <img src="imagens/logo-ribeiro.png" alt="Ribeiro" onerror="this.style.display='none'">
                 </div>
-                
+
                 <div class="footer-divider">
                     <div class="line"></div>
                     <span>✦</span>
                     <div class="line"></div>
                 </div>
-                
+
                 <div class="footer-social">
                     <a href="https://api.whatsapp.com/send?phone=5512991652100" class="social-btn" target="_blank" rel="noopener noreferrer">
                         <i class="fab fa-whatsapp"></i>
                     </a>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2024 Ribeiro Móveis e Colchões. Todos os direitos reservados.</p>
             </div>
@@ -1208,10 +1249,10 @@
                         <h2 id="modalTitle"></h2>
                         <div id="modalDisponibilidade"></div>
                     </div>
-                    
+
                     <div class="gold-line-small"></div>
                     <p class="modal-price" id="modalPrice"></p>
-                    
+
                     <div class="dimensoes-compactas">
                         <h4><i class="fas fa-ruler-combined"></i> Dimensões</h4>
                         <div class="dimensoes-row">
@@ -1232,12 +1273,12 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="modal-section">
                         <h4><i class="fas fa-palette"></i> Cores Disponíveis</h4>
                         <div class="color-options" id="colorOptions"></div>
                     </div>
-                    
+
                     <button class="btn-whatsapp" onclick="enviarWhatsApp()">
                         <i class="fab fa-whatsapp"></i> Quero este Produto
                     </button>
@@ -1289,24 +1330,23 @@
 
             db.ref('produtos').on('value', function(snapshot) {
                 const dados = snapshot.val();
-                
+
                 if (dados) {
                     produtos = Object.keys(dados).map(function(key) {
                         return { id: key, ...dados[key] };
                     });
-                    
-                    // 🔥 ORDENAR PRODUTOS PELA ORDEM DEFINIDA NO ADMIN
+
                     produtos.sort(function(a, b) {
                         return (a.ordem || 0) - (b.ordem || 0);
                     });
-                    
+
                     localStorage.setItem('produtos_backup', JSON.stringify(produtos));
                     renderProdutos('todos');
                 } else {
                     produtos = [];
                     renderProdutos('todos');
                 }
-                
+
                 loading.classList.remove('active');
             }, function(error) {
                 loading.classList.remove('active');
@@ -1316,39 +1356,39 @@
         function renderProdutos(filtro, subcategoria) {
             const grid = document.getElementById('produtosGrid');
             grid.innerHTML = '';
-            
+
             if (produtos.length === 0) {
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">Nenhum produto cadastrado.</div>';
                 return;
             }
-            
+
             let filtrados = produtos;
-            
+
             if (filtro !== 'todos') {
                 filtrados = produtos.filter(p => p.ambiente === filtro);
                 if (subcategoria) {
                     filtrados = filtrados.filter(p => p.subcategoria === subcategoria);
                 }
             }
-            
+
             if (filtrados.length === 0) {
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">Nenhum produto nesta categoria.</div>';
                 return;
             }
-            
+
             filtrados.forEach(produto => {
                 const card = document.createElement('div');
                 card.className = 'produto-card';
                 card.onclick = () => openModal(produto);
-                
+
                 const cores = produto.cores || [];
                 const coresHtml = cores.slice(0, 4).map(cor => 
                     `<span class="color-dot" style="background-color: ${getColorCode(cor)}" title="${cor}"></span>`
                 ).join('');
-                
+
                 const imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : '';
                 const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f5f5f5' width='400' height='300'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle'%3ESem Imagem%3C/text%3E%3C/svg%3E";
-                
+
                 card.innerHTML = `
                     <div class="produto-image">
                         <img src="${imgSrc}" alt="${produto.nome || 'Produto'}" onerror="this.src='${svgPlaceholder}'">
@@ -1360,10 +1400,10 @@
                         <button class="produto-btn">Ver Detalhes <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></button>
                     </div>
                 `;
-                
+
                 grid.appendChild(card);
             });
-            
+
             document.querySelectorAll('.ambiente-btn').forEach(btn => {
                 btn.classList.remove('active');
                 const onclick = btn.getAttribute('onclick');
@@ -1381,33 +1421,39 @@
 
         function filtrarSubcategoria(ambiente, subcategoria) {
             renderProdutos(ambiente, subcategoria);
+            fecharTodosDropdowns();
         }
 
-        // 🔥 FUNÇÃO PARA ABRIR/FECHAR DROPDOWN NO MOBILE
-        function toggleDropdown(element) {
-            // Fecha todos os outros dropdowns
+        // CORREÇÃO DROPDOWN MOBILE
+        function toggleDropdownMobile(element) {
+            if (window.innerWidth <= 768) {
+                document.querySelectorAll('.ambiente-item').forEach(item => {
+                    if (item !== element) {
+                        item.classList.remove('active');
+                    }
+                });
+                element.classList.toggle('active');
+            }
+        }
+
+        function fecharTodosDropdowns() {
             document.querySelectorAll('.ambiente-item').forEach(item => {
-                if (item !== element) {
-                    item.classList.remove('active');
-                }
+                item.classList.remove('active');
             });
-            
-            // Toggle no atual
-            element.classList.toggle('active');
         }
 
         function openModal(produto) {
             currentProduto = produto;
             currentImageIndex = 0;
-            
+
             document.getElementById('modalTitle').textContent = produto.nome || 'Produto';
             document.getElementById('modalPrice').textContent = 'R$ ' + (produto.preco || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            
+
             const dims = (produto.dimensoes || '- x - x -').split(' x ');
             document.getElementById('dimLargura').textContent = dims[0] || '-';
             document.getElementById('dimAltura').textContent = dims[1] || '-';
             document.getElementById('dimProfundidade').textContent = dims[2] || '-';
-            
+
             const disp = document.getElementById('modalDisponibilidade');
             if (produto.disponibilidade === 'pronta-entrega') {
                 disp.innerHTML = '<div class="disponibilidade-modal"><i class="fas fa-check-circle"></i> PRONTA ENTREGA</div>';
@@ -1416,14 +1462,15 @@
             } else {
                 disp.innerHTML = '';
             }
-            
+
             const cores = produto.cores || [];
             document.getElementById('colorOptions').innerHTML = cores.map((cor, idx) => 
                 `<span class="color-option ${idx === 0 ? 'active' : ''}" onclick="selectColor(this)">${cor}</span>`
             ).join('');
-            
+
             updateGallery();
             document.getElementById('produtoModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
         function updateGallery() {
@@ -1448,6 +1495,7 @@
 
         function closeModal() {
             document.getElementById('produtoModal').classList.remove('active');
+            document.body.style.overflow = '';
             currentProduto = null;
         }
 
@@ -1458,18 +1506,18 @@
 
         function enviarWhatsApp() {
             if (!currentProduto) return;
-            
+
             const cor = document.querySelector('.color-option.active')?.textContent || (currentProduto.cores || [])[0] || '';
             const disp = currentProduto.disponibilidade === 'pronta-entrega' ? '*Pronta Entrega* ✅' : '*Sob Encomenda* ⏰';
             const cod = currentProduto.codigo || 'N/A';
-            
+
             const mensagem = `*Ribeiro Móveis e Colchões* 👑\n\nOlá! Tenho interesse no produto:\n\n📦 *${currentProduto.nome}*\n🎨 Cor: ${cor}\n${disp}\n🏷️ Código: ${cod}\n\nPor favor, me envie mais informações`;
-            
+
             const mensagemCodificada = encodeURIComponent(mensagem);
             const numero = '5512991652100';
-            
+
             const linkWhatsApp = `https://wa.me/${numero}?text=${mensagemCodificada}`;
-            
+
             window.open(linkWhatsApp, '_blank');
         }
 
@@ -1497,14 +1545,17 @@
             if (e.target === this) closeModal();
         });
 
-        // Fecha dropdown ao clicar fora no mobile
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.ambiente-item')) {
-                document.querySelectorAll('.ambiente-item').forEach(item => {
-                    item.classList.remove('active');
-                });
+                fecharTodosDropdowns();
             }
         });
+
+        document.getElementById('produtoModal').addEventListener('touchmove', function(e) {
+            if (e.target === this) {
+                e.preventDefault();
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
