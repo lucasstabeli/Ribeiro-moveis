@@ -627,7 +627,6 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
-        /* DEBUG CONSOLE */
         .debug-console {
             position: fixed;
             bottom: 10px;
@@ -668,7 +667,6 @@
             .form-row-compact { grid-template-columns: 1fr; }
         }
     </style>
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -714,8 +712,8 @@
         </div>
 
         <div class="admin-tabs-compact">
-            <button class="tab-btn-compact active" onclick="mostrarAba('cadastro')"><i class="fas fa-plus"></i> Cadastrar</button>
-            <button class="tab-btn-compact" onclick="mostrarAba('ordenar')"><i class="fas fa-sort"></i> Ordenar</button>
+            <button class="tab-btn-compact active" onclick="mostrarAba('cadastro')" id="tabCadastro"><i class="fas fa-plus"></i> Cadastrar</button>
+            <button class="tab-btn-compact" onclick="mostrarAba('ordenar')" id="tabOrdenar"><i class="fas fa-sort"></i> Ordenar</button>
         </div>
 
         <div class="admin-content">
@@ -804,7 +802,12 @@
                             <span>📦 Produtos</span>
                             <span id="contadorProdutos" style="font-size: 0.8rem;">0 itens</span>
                         </div>
-                        <div class="box-content" id="listaProdutos"></div>
+                        <div class="box-content" id="listaProdutos">
+                            <div style="text-align: center; padding: 40px; color: #666;">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px; color: var(--dourado);"></i>
+                                <p>Carregando produtos...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -836,7 +839,10 @@
     <div id="debugConsole" class="debug-console"></div>
 
     <script>
+
+        // ============================================
         // CONFIGURAÇÃO FIREBASE
+        // ============================================
         const firebaseConfig = {
             apiKey: "AIzaSyBxlhL9IMFvUKAGxYikutb1BU2WGnC_t5E",
             authDomain: "ribeiro-moveis.firebaseapp.com",
@@ -869,9 +875,10 @@
         let draggedIndex = null;
         let touchStartY = 0;
         let touchCurrentY = 0;
-        let placeholder = null;
 
+        // ============================================
         // DEBUG
+        // ============================================
         function log(msg) {
             console.log('[Ribeiro Admin]', msg);
             const debugDiv = document.getElementById('debugConsole');
@@ -885,7 +892,9 @@
             document.getElementById('debugConsole').classList.toggle('active');
         }
 
+        // ============================================
         // INICIALIZAÇÃO
+        // ============================================
         document.addEventListener('DOMContentLoaded', function() {
             log('Iniciando aplicação...');
 
@@ -895,7 +904,6 @@
                 storage = firebase.storage();
                 log('Firebase inicializado com sucesso');
 
-                // Verificar conexão
                 verificarConexao();
 
                 if (localStorage.getItem('logado') === 'true') {
@@ -943,46 +951,94 @@
             carregarProdutosFirebase();
         }
 
-        // CORREÇÃO PRINCIPAL: Carregar produtos com tratamento de erro completo
+        // ============================================
+        // CORREÇÃO PRINCIPAL: Carregar produtos
+        // ============================================
         function carregarProdutosFirebase() {
-            console.log('=== CARREGANDO ===');
-            
-            // 1. LOCALSTORAGE PRIMEIRO
+            log('=== CARREGANDO PRODUTOS ===');
+
+            // Mostrar loading na lista
+            const lista = document.getElementById('listaProdutos');
+            if (lista) {
+                lista.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--dourado);"></i><p style="margin-top: 10px;">Carregando...</p></div>';
+            }
+
+            // 1. LOCALSTORAGE PRIMEIRO (backup rápido)
             const backup = localStorage.getItem('produtos_backup');
             if (backup) {
                 try {
                     produtos = JSON.parse(backup);
-                    console.log('LocalStorage:', produtos.length);
+                    log('Backup carregado: ' + produtos.length + ' produtos');
                     atualizarLista();
                 } catch (e) {
+                    log('Erro no backup: ' + e.message);
                     produtos = [];
                 }
             }
-        
-            // 2. FIREBASE
-            if (firebaseListener) firebaseListener.off();
-            
+
+            // 2. FIREBASE - Remover listener anterior se existir
+            if (firebaseListener) {
+                firebaseListener.off();
+                log('Listener anterior removido');
+            }
+
+            // 3. Criar novo listener
             firebaseListener = db.ref('produtos');
             firebaseListener.on('value', 
                 function(snapshot) {
                     const dados = snapshot.val();
+                    log('Dados recebidos do Firebase');
+
                     if (dados) {
-                        produtos = Object.keys(dados).map(key => ({ id: key, ...dados[key] }));
+                        // Converter objeto em array
+                        produtos = Object.keys(dados).map(function(key) {
+                            return { 
+                                id: key, 
+                                ...dados[key],
+                                // CORREÇÃO: Garantir ordem existe (se undefined, vai pro final)
+                                ordem: dados[key].ordem !== undefined ? dados[key].ordem : 999999
+                            };
+                        });
+
+                        log('Produtos carregados: ' + produtos.length);
+
+                        // Salvar backup
                         localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-                        atualizarLista(); // CHAMA A FUNÇÃO
+
+                        // Atualizar interface
+                        atualizarLista();
+                    } else {
+                        log('Nenhum dado encontrado');
+                        produtos = [];
+                        atualizarLista();
                     }
                 },
                 function(error) {
+                    log('ERRO Firebase: ' + error.message);
                     console.error('Erro:', error);
+
+                    // Se temos backup, usar ele
+                    if (produtos.length > 0) {
+                        log('Usando backup devido ao erro');
+                        atualizarLista();
+                    } else {
+                        if (lista) {
+                            lista.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc3545;"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar. Tente recarregar a página.</p></div>';
+                        }
+                    }
                 }
             );
         }
 
         function mostrarAba(aba) {
+            // Atualizar tabs
             document.querySelectorAll('.tab-btn-compact').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab' + aba.charAt(0).toUpperCase() + aba.slice(1)).classList.add('active');
+
+            // Atualizar panels
             document.querySelectorAll('.tab-panel-admin').forEach(panel => panel.classList.remove('active'));
-            event.target.classList.add('active');
             document.getElementById('aba' + aba.charAt(0).toUpperCase() + aba.slice(1)).classList.add('active');
+
             if (aba === 'ordenar') atualizarListaOrdenacao();
         }
 
@@ -1002,15 +1058,30 @@
                 alert('Digite um código para buscar');
                 return;
             }
+
+            log('Buscando código: ' + codigo);
             const produto = produtos.find(p => p.codigo === codigo);
+
             if (!produto) {
                 alert('Produto não encontrado');
                 input.value = '';
                 return;
             }
+
+            log('Produto encontrado: ' + produto.nome);
             produtoBuscadoId = produto.id;
+
             const container = document.getElementById('buscaConteudo');
-            container.innerHTML = '<div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--creme); border-radius: 8px;"><img src="' + produto.imagens[0] + '" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 2px solid var(--dourado);"><div style="text-align: left;"><strong style="color: var(--vinho); display: block; margin-bottom: 5px;">' + produto.nome + '</strong><span class="codigo-badge-compact">' + (produto.codigo || '----') + '</span><div style="color: #25D366; font-weight: bold; margin-top: 5px;">R$ ' + produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</div></div></div>';
+            container.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--creme); border-radius: 8px;">
+                    <img src="${produto.imagens[0]}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 2px solid var(--dourado);">
+                    <div style="text-align: left;">
+                        <strong style="color: var(--vinho); display: block; margin-bottom: 5px;">${produto.nome}</strong>
+                        <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
+                        <div style="color: #25D366; font-weight: bold; margin-top: 5px;">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                </div>
+            `;
             document.getElementById('modalBusca').classList.add('active');
             input.value = '';
         }
@@ -1027,6 +1098,9 @@
             produtoBuscadoId = null;
         }
 
+        // ============================================
+        // UPLOAD DE IMAGENS
+        // ============================================
         async function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1080,7 +1154,12 @@
 
         function atualizarPreview() {
             const container = document.getElementById('previewContainer');
-            container.innerHTML = imagensTemp.map((img, idx) => '<div class="preview-item-compact"><img src="' + img + '" alt="Preview"><button type="button" class="remove-img-compact" onclick="removerImagem(' + idx + ')">×</button></div>').join('');
+            container.innerHTML = imagensTemp.map((img, idx) => `
+                <div class="preview-item-compact">
+                    <img src="${img}" alt="Preview">
+                    <button type="button" class="remove-img-compact" onclick="removerImagem(${idx})">×</button>
+                </div>
+            `).join('');
         }
 
         function removerImagem(index) {
@@ -1088,6 +1167,7 @@
             atualizarPreview();
         }
 
+        // Setup drag and drop
         const uploadArea = document.querySelector('.upload-area-compact');
         if (uploadArea) {
             uploadArea.addEventListener('dragover', (e) => {
@@ -1126,7 +1206,7 @@
             select.innerHTML = '<option value="">Escolha...</option>';
             if (ambiente && SUBCATEGORIAS[ambiente]) {
                 SUBCATEGORIAS[ambiente].forEach(sub => {
-                    select.innerHTML += '<option value="' + sub + '">' + sub + '</option>';
+                    select.innerHTML += `<option value="${sub}">${sub}</option>`;
                 });
             }
         }
@@ -1137,6 +1217,9 @@
             document.querySelector('.disp-option-compact.' + (tipo === 'pronta-entrega' ? 'pronta' : 'encomenda')).classList.add('selected');
         }
 
+        // ============================================
+        // SALVAR PRODUTO - CORREÇÃO DA ORDEM
+        // ============================================
         async function salvarProduto(event) {
             event.preventDefault();
 
@@ -1163,6 +1246,17 @@
 
             let codigo = document.getElementById('codigoProduto').value || gerarCodigoProduto();
 
+            // CORREÇÃO: Definir ordem corretamente
+            let ordem = 0;
+            if (id) {
+                // Se está editando, mantém a ordem existente
+                const produtoExistente = produtos.find(p => p.id == id);
+                ordem = produtoExistente ? (produtoExistente.ordem || 0) : produtos.length;
+            } else {
+                // Se é novo, coloca no final
+                ordem = produtos.length;
+            }
+
             const produto = {
                 nome: document.getElementById('nomeProduto').value.trim(),
                 preco: parseFloat(document.getElementById('precoProduto').value),
@@ -1175,31 +1269,20 @@
                           (document.getElementById('dimAltura').value || '-') + ' x ' + 
                           (document.getElementById('dimProfundidade').value || '-'),
                 codigo: codigo,
-                ordem: 0,
+                ordem: ordem,  // CORREÇÃO: Garantir que ordem sempre existe
                 dataAtualizacao: Date.now()
             };
 
             try {
                 if (id) {
-                    const produtoAntigo = produtos.find(p => p.id == id);
-                    if (produtoAntigo && produtoAntigo.ordem !== undefined) {
-                        produto.ordem = produtoAntigo.ordem;
-                    }
                     await db.ref('produtos/' + id).update(produto);
                     log('Produto atualizado: ' + codigo);
                 } else {
                     const novoId = db.ref('produtos').push().key;
                     produto.id = novoId;
-                    produto.ordem = produtos.length;
                     await db.ref('produtos/' + novoId).set(produto);
-                    log('Novo produto criado: ' + codigo);
+                    log('Novo produto criado: ' + codigo + ' (ordem: ' + ordem + ')');
                 }
-
-                // Forçar atualização imediata
-                setTimeout(() => {
-                    const lista = document.getElementById('listaProdutos');
-                    if (lista) lista.scrollTop = 0;
-                }, 100);
 
                 limparFormulario();
                 alert('✅ Produto salvo com sucesso! Código: ' + codigo);
@@ -1212,39 +1295,67 @@
             }
         }
 
+        // ============================================
+        // CORREÇÃO: Atualizar lista - garantir renderização
+        // ============================================
         function atualizarLista() {
             const container = document.getElementById('listaProdutos');
             const contador = document.getElementById('contadorProdutos');
-            contador.textContent = produtos.length + ' itens';
 
-            if (produtos.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; color: var(--dourado);"></i><p style="font-size: 0.9rem;">Nenhum produto cadastrado</p></div>';
+            if (!container) {
+                log('ERRO: Container não encontrado');
                 return;
             }
 
-            produtos.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+            // Atualizar contador
+            if (contador) {
+                contador.textContent = produtos.length + ' itens';
+            }
+
+            log('Renderizando ' + produtos.length + ' produtos');
+
+            if (produtos.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; color: var(--dourado);"></i>
+                        <p style="font-size: 0.9rem;">Nenhum produto cadastrado</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // CORREÇÃO: Ordenar por ordem (undefined vai pro final)
+            const produtosOrdenados = [...produtos].sort((a, b) => {
+                const ordemA = a.ordem !== undefined ? a.ordem : 999999;
+                const ordemB = b.ordem !== undefined ? b.ordem : 999999;
+                return ordemA - ordemB;
+            });
 
             const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%23ddd' width='50' height='50'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ESem%3C/text%3E%3C/svg%3E";
 
-            container.innerHTML = produtos.map(produto => {
+            container.innerHTML = produtosOrdenados.map(produto => {
                 const imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : svgPlaceholder;
 
-                return `<div class="produto-item-compact" data-id="${produto.id}">
-                    <img src="${imgSrc}" alt="${produto.nome}" loading="lazy" onerror="this.src='${svgPlaceholder}'">
-                    <div class="produto-info-compact">
-                        <div>
-                            <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
-                            <span style="font-size: 0.75rem; color: #666;">${produto.ambiente}</span>
+                return `
+                    <div class="produto-item-compact" data-id="${produto.id}">
+                        <img src="${imgSrc}" alt="${produto.nome}" loading="lazy" onerror="this.src='${svgPlaceholder}'">
+                        <div class="produto-info-compact">
+                            <div>
+                                <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
+                                <span style="font-size: 0.75rem; color: #666;">${produto.ambiente}</span>
+                            </div>
+                            <h4>${produto.nome}</h4>
+                            <div class="preco">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
                         </div>
-                        <h4>${produto.nome}</h4>
-                        <div class="preco">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                        <div class="produto-acoes-compact">
+                            <button class="btn-acao-compact btn-editar-compact" onclick="editarProduto('${produto.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="btn-acao-compact btn-excluir-compact" onclick="excluirProduto('${produto.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
-                    <div class="produto-acoes-compact">
-                        <button class="btn-acao-compact btn-editar-compact" onclick="editarProduto('${produto.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-                        <button class="btn-acao-compact btn-excluir-compact" onclick="excluirProduto('${produto.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`;
+                `;
             }).join('');
+
+            log('Lista atualizada com sucesso');
         }
 
         function editarProduto(id) {
@@ -1280,7 +1391,8 @@
             document.getElementById('tituloForm').innerHTML = '✏️ Editar';
             document.getElementById('btnCancelar').style.display = 'block';
 
-            document.querySelector('.tab-btn-compact').click();
+            // Mudar para aba de cadastro
+            mostrarAba('cadastro');
         }
 
         async function excluirProduto(id) {
@@ -1320,16 +1432,21 @@
             document.getElementById('btnCancelar').style.display = 'none';
         }
 
+        // ============================================
+        // ORDENAÇÃO
+        // ============================================
         function selecionarOrdenacao(ambiente) {
             ordenacaoAtual = ambiente;
-            document.querySelectorAll('.tab-btn-compact').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#abaOrdenar .tab-btn-compact').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             atualizarListaOrdenacao();
         }
 
         function atualizarListaOrdenacao() {
             const container = document.getElementById('ordenarLista');
-            let filtrados = ordenacaoAtual === 'todos' ? [...produtos] : produtos.filter(p => p.ambiente === ordenacaoAtual);
+            let filtrados = ordenacaoAtual === 'todos' 
+                ? [...produtos] 
+                : produtos.filter(p => p.ambiente === ordenacaoAtual);
 
             filtrados.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
@@ -1338,7 +1455,20 @@
                 return;
             }
 
-            container.innerHTML = filtrados.map((produto, index) => '<div class="produto-item-compact" draggable="true" data-id="' + produto.id + '" data-index="' + index + '"><i class="fas fa-grip-vertical drag-handle"></i><img src="' + produto.imagens[0] + '" alt="' + produto.nome + '" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 2px solid var(--dourado);"><div style="flex: 1;"><h4 style="color: var(--vinho); font-size: 0.95rem; margin-bottom: 3px;">' + produto.nome + '</h4><div style="font-size: 0.8rem; color: #666;"><span class="codigo-badge-compact">' + (produto.codigo || '----') + '</span>' + produto.ambiente + ' | ' + produto.subcategoria + '</div></div><div style="color: #25D366; font-weight: bold;">R$ ' + produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</div></div>').join('');
+            container.innerHTML = filtrados.map((produto, index) => `
+                <div class="produto-item-compact" draggable="true" data-id="${produto.id}" data-index="${index}">
+                    <i class="fas fa-grip-vertical drag-handle"></i>
+                    <img src="${produto.imagens[0]}" alt="${produto.nome}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 2px solid var(--dourado);">
+                    <div style="flex: 1;">
+                        <h4 style="color: var(--vinho); font-size: 0.95rem; margin-bottom: 3px;">${produto.nome}</h4>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
+                            ${produto.ambiente} | ${produto.subcategoria}
+                        </div>
+                    </div>
+                    <div style="color: #25D366; font-weight: bold;">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                </div>
+            `).join('');
 
             inicializarDragAndDrop(container);
         }
@@ -1346,7 +1476,7 @@
         function inicializarDragAndDrop(container) {
             const items = container.querySelectorAll('.produto-item-compact');
 
-            items.forEach((item, index) => {
+            items.forEach((item) => {
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragend', handleDragEnd);
                 item.addEventListener('dragover', handleDragOver);
@@ -1443,6 +1573,7 @@
                 });
                 await db.ref().update(atualizacoes);
 
+                // Atualizar ordem local
                 items.forEach((item, index) => {
                     const id = item.getAttribute('data-id');
                     const produto = produtos.find(p => p.id === id);
@@ -1474,4 +1605,3 @@
     </script>
 </body>
 </html>
-
