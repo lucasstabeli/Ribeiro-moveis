@@ -1,6 +1,7 @@
 // ============================================
-// RIBEIRIO MÓVEIS - APP.JS COM FIREBASE
-// SINCRONIZAÇÃO EM TEMPO REAL PC ↔ CELULAR
+// RIBEIRIO MÓVEIS - APP.JS CORRIGIDO
+// PROBLEMA: Produtos não apareciam após o 27º
+// SOLUÇÃO: Garantir ordenação correta e tratamento de ordem undefined
 // ============================================
 
 let produtos = [];
@@ -32,47 +33,77 @@ const AMBIENTES = {
 // INICIALIZAÇÃO DO FIREBASE
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-    carregarProdutosFirebase();
+    console.log('[Ribeiro] Iniciando app...');
+
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        console.log('[Ribeiro] Firebase inicializado');
+        carregarProdutosFirebase();
+    } catch (e) {
+        console.error('[Ribeiro] Erro ao inicializar:', e);
+        mostrarErro();
+    }
 });
 
 // ============================================
-// CARREGAR PRODUTOS EM TEMPO REAL
+// CORREÇÃO PRINCIPAL: Carregar produtos
 // ============================================
 function carregarProdutosFirebase() {
     const grid = document.getElementById('produtosGrid');
     if (grid) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><div style="width: 40px; height: 40px; border: 4px solid #D4AF37; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div><p style="color: #5D1A1A;">Carregando produtos...</p></div>';
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                <div style="width: 40px; height: 40px; border: 4px solid #D4AF37; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                <p style="color: #5D1A1A;">Carregando produtos...</p>
+            </div>
+        `;
     }
 
+    // 1. LOCALSTORAGE PRIMEIRO (backup rápido)
     const backup = localStorage.getItem('produtos_backup');
     if (backup) {
         try {
             produtos = JSON.parse(backup);
+            console.log('[Ribeiro] Backup carregado:', produtos.length, 'produtos');
             renderProdutos('todos');
-        } catch (e) {}
+        } catch (e) {
+            console.error('[Ribeiro] Erro no backup:', e);
+            produtos = [];
+        }
     }
 
+    // 2. FIREBASE - Listener em tempo real
     const produtosRef = db.ref('produtos');
 
     produtosRef.on('value', function(snapshot) {
         const dados = snapshot.val();
+        console.log('[Ribeiro] Dados recebidos do Firebase');
 
         if (dados) {
+            // Converter objeto em array e garantir ordem
             produtos = Object.keys(dados).map(function(key) {
-                return { id: key, ...dados[key] };
+                return { 
+                    id: key, 
+                    ...dados[key],
+                    // CORREÇÃO: Se ordem for undefined, coloca no final (999999)
+                    ordem: dados[key].ordem !== undefined ? dados[key].ordem : 999999
+                };
             });
 
+            console.log('[Ribeiro] Produtos processados:', produtos.length);
+
+            // Salvar backup
             localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+
+            // Renderizar
             renderProdutos('todos');
-            console.log('✅ Produtos atualizados do Firebase:', produtos.length);
         } else {
             produtos = [];
             renderProdutos('todos');
         }
     }, function(error) {
-        console.error('❌ Erro Firebase:', error);
+        console.error('[Ribeiro] Erro Firebase:', error);
         if (produtos.length === 0) {
             mostrarErro();
         }
@@ -90,6 +121,8 @@ function salvarProdutoFirebase(produto) {
     } else {
         const novoId = produtosRef.push().key;
         produto.id = novoId;
+        // CORREÇÃO: Definir ordem para novos produtos
+        produto.ordem = produtos.length;
         return produtosRef.child(novoId).set(produto);
     }
 }
@@ -113,32 +146,56 @@ function uploadImagemFirebase(arquivo, callback) {
 }
 
 // ============================================
-// RENDERIZAÇÃO DOS PRODUTOS
+// RENDERIZAÇÃO DOS PRODUTOS - CORREÇÃO
 // ============================================
 function mostrarErro() {
     const grid = document.getElementById('produtosGrid');
     if (grid) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 15px;"></i><p style="color: #666; margin-bottom: 15px;">Erro ao carregar produtos.</p><button onclick="carregarProdutosFirebase()" style="padding: 10px 20px; background: #5D1A1A; color: #D4AF37; border: none; cursor: pointer;">Tentar novamente</button></div>';
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 15px;"></i>
+                <p style="color: #666; margin-bottom: 15px;">Erro ao carregar produtos.</p>
+                <button onclick="carregarProdutosFirebase()" style="padding: 10px 20px; background: #5D1A1A; color: #D4AF37; border: none; cursor: pointer;">Tentar novamente</button>
+            </div>
+        `;
     }
 }
 
 function renderProdutos(filtro, subcategoria) {
     const grid = document.getElementById('produtosGrid');
     if (!grid) return;
+
     grid.innerHTML = '';
 
     if (produtos.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px 20px;"><i class="fas fa-box-open" style="font-size: 3rem; color: #D4AF37; margin-bottom: 15px;"></i><h3 style="color: #5D1A1A; margin-bottom: 10px; font-size: 1.1rem;">Nenhum produto cadastrado</h3><p style="color: #666; font-size: 0.9rem;">Acesse a área administrativa para adicionar produtos.</p></div>';
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px;">
+                <i class="fas fa-box-open" style="font-size: 3rem; color: #D4AF37; margin-bottom: 15px;"></i>
+                <h3 style="color: #5D1A1A; margin-bottom: 10px; font-size: 1.1rem;">Nenhum produto cadastrado</h3>
+                <p style="color: #666; font-size: 0.9rem;">Acesse a área administrativa para adicionar produtos.</p>
+            </div>
+        `;
         return;
     }
 
+    // CORREÇÃO: Ordenar produtos antes de filtrar
+    let produtosOrdenados = [...produtos].sort(function(a, b) {
+        const ordemA = a.ordem !== undefined ? a.ordem : 999999;
+        const ordemB = b.ordem !== undefined ? b.ordem : 999999;
+        return ordemA - ordemB;
+    });
+
     let filtrados;
     if (filtro === 'todos') {
-        filtrados = produtos.slice();
+        filtrados = produtosOrdenados;
     } else if (subcategoria) {
-        filtrados = produtos.filter(function(p) { return p.ambiente === filtro && p.subcategoria === subcategoria; });
+        filtrados = produtosOrdenados.filter(function(p) { 
+            return p.ambiente === filtro && p.subcategoria === subcategoria; 
+        });
     } else {
-        filtrados = produtos.filter(function(p) { return p.ambiente === filtro; });
+        filtrados = produtosOrdenados.filter(function(p) { 
+            return p.ambiente === filtro; 
+        });
     }
 
     if (filtrados.length === 0) {
@@ -150,6 +207,7 @@ function renderProdutos(filtro, subcategoria) {
         grid.appendChild(createProdutoCard(produto));
     });
 
+    // Atualizar botões ativos
     document.querySelectorAll('.ambiente-btn').forEach(function(btn) {
         btn.classList.remove('active');
         var onclick = btn.getAttribute('onclick');
@@ -173,7 +231,20 @@ function createProdutoCard(produto) {
     var imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : '';
     var svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f5f5f5' width='400' height='300'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle'%3ESem Imagem%3C/text%3E%3C/svg%3E";
 
-    card.innerHTML = '<div class="produto-image"><img src="' + imgSrc + '" alt="' + (produto.nome || 'Produto') + '" loading="lazy" onerror="this.src=\'' + svgPlaceholder + '\'"></div><div class="produto-info"><h3>' + (produto.nome || 'Produto') + '</h3><p class="produto-price">R$ ' + formatarPreco(produto.preco || 0) + '</p><div class="produto-colors">' + cores + ((produto.cores || []).length > 4 ? '<span class="color-dot" style="background: linear-gradient(45deg, #ddd, #999); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666;">+</span>' : '') + '</div><button class="produto-btn">Ver Detalhes <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></button></div>';
+    card.innerHTML = `
+        <div class="produto-image">
+            <img src="${imgSrc}" alt="${produto.nome || 'Produto'}" loading="lazy" onerror="this.src='${svgPlaceholder}'">
+        </div>
+        <div class="produto-info">
+            <h3>${produto.nome || 'Produto'}</h3>
+            <p class="produto-price">R$ ${formatarPreco(produto.preco || 0)}</p>
+            <div class="produto-colors">
+                ${cores}
+                ${(produto.cores || []).length > 4 ? '<span class="color-dot" style="background: linear-gradient(45deg, #ddd, #999); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #666;">+</span>' : ''}
+            </div>
+            <button class="produto-btn">Ver Detalhes <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></button>
+        </div>
+    `;
 
     return card;
 }
@@ -306,6 +377,7 @@ window.onclick = function(event) {
     }
 };
 
+// Adicionar animação de spin
 var style = document.createElement('style');
 style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
 document.head.appendChild(style);
