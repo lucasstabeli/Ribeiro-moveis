@@ -1,7 +1,7 @@
 // ============================================
-// RIBEIRIO MÓVEIS - APP.JS v3.1 (SEM BACKUP LOCAL)
-// PROBLEMA: LocalStorage cheio (QuotaExceededError)
-// SOLUÇÃO: Remover backup local, buscar sempre do Firebase
+// RIBEIRIO MÓVEIS - APP.JS v3.2 (CORES CORRIGIDAS)
+// PROBLEMA: Cores compostas (Cinamomo, Carvalho) ficam brancas
+// SOLUÇÃO: Sistema inteligente de reconhecimento de cores
 // ============================================
 
 let produtos = [];
@@ -31,23 +31,216 @@ const AMBIENTES = {
 };
 
 // ============================================
+// BANCO DE DADOS DE CORES EXPANDIDO
+// ============================================
+const CORES_MOVELARIA = {
+    // Madeiras
+    'carvalho': '#D4A574',
+    'carvalho claro': '#E6C9A8',
+    'carvalho escuro': '#8B6914',
+    'nogueira': '#8B5A2B',
+    'nogueira clara': '#A67B5B',
+    'nogueira escura': '#5C4033',
+    'imbuia': '#8B7D6B',
+    'imbuia clara': '#A89F91',
+    'imbuia escura': '#6B5D4F',
+    'freijo': '#C4A77D',
+    'freijo claro': '#D4B896',
+    'freijo escuro': '#9A8260',
+    'cinamomo': '#D2B48C',
+    'cinamomo claro': '#E5D4B8',
+    'cinamomo escuro': '#B8956A',
+    'amendoa': '#D4A574',
+    'amêndoa': '#D4A574',
+    'amendoa off white': '#E8DCC4',
+    'noce': '#8B7355',
+    'noce milano': '#9A8260',
+    'noce málaga': '#8B6914',
+    'malaga': '#8B6914',
+    'málaga': '#8B6914',
+    'castanho': '#8B4513',
+    'castanho claro': '#A0522D',
+    'castanho escuro': '#654321',
+    'tabaco': '#6B4423',
+    'tabaco claro': '#8B5A2B',
+    'tabaco escuro': '#4A2C17',
+    'wengue': '#3D2817',
+    'wengué': '#3D2817',
+    'chocolate': '#5D4037',
+    'chocolate claro': '#8D6E63',
+    'chocolate escuro': '#3E2723',
+    'canela': '#9C6B4F',
+    'caramelo': '#C68E17',
+    'avelã': '#A89F91',
+    'avela': '#A89F91',
+    'macchiato': '#C4A77D',
+    'rústico': '#8B7355',
+    'rustico': '#8B7355',
+    'rústico claro': '#A89F91',
+    'rústico escuro': '#6B5344',
+    
+    // Cores sólidas
+    'branco': '#FFFFFF',
+    'off white': '#F5F5F5',
+    'offwhite': '#F5F5F5',
+    'off-white': '#F5F5F5',
+    'creme': '#FFFDD0',
+    'bege': '#F5F5DC',
+    'bege claro': '#F5F5DC',
+    'bege escuro': '#C2B280',
+    'marfim': '#FFFFF0',
+    'cinza': '#808080',
+    'cinza claro': '#D3D3D3',
+    'cinza escuro': '#696969',
+    'cinza grafite': '#414141',
+    'grafite': '#414141',
+    'preto': '#000000',
+    'preto fosco': '#1C1C1C',
+    'marrom': '#8B4513',
+    'marrom claro': '#A0522D',
+    'marrom escuro': '#654321',
+    'marrom café': '#6F4E37',
+    
+    // Cores vibrantes
+    'vermelho': '#FF0000',
+    'vermelho cereja': '#DE3163',
+    'bordô': '#800020',
+    'bordo': '#800020',
+    'vinho': '#722F37',
+    'vinho marsala': '#B57170',
+    'azul': '#0000FF',
+    'azul marinho': '#000080',
+    'azul royal': '#4169E1',
+    'azul petróleo': '#004953',
+    'azul turquesa': '#40E0D0',
+    'azul claro': '#87CEEB',
+    'azul escuro': '#00008B',
+    'verde': '#008000',
+    'verde musgo': '#6B8E23',
+    'verde oliva': '#808000',
+    'verde militar': '#4B5320',
+    'verde claro': '#90EE90',
+    'verde escuro': '#006400',
+    'amarelo': '#FFFF00',
+    'amarelo ouro': '#FFD700',
+    'dourado': '#D4AF37',
+    'rosa': '#FFC0CB',
+    'rosa claro': '#FFB6C1',
+    'rosa escuro': '#E75480',
+    'roxo': '#800080',
+    'roxo claro': '#BA55D3',
+    'lilás': '#C8A2C8',
+    'lilas': '#C8A2C8',
+    'laranja': '#FFA500',
+    'laranja claro': '#FFB347',
+    'salmon': '#FA8072',
+    'salmão': '#FA8072',
+    'salmao': '#FA8072',
+    'coral': '#FF7F50',
+    'pêssego': '#FFDAB9',
+    'pessego': '#FFDAB9',
+    'turquesa': '#40E0D0',
+    'tiffany': '#0ABAB5',
+    'cobre': '#B87333',
+    'bronze': '#CD7F32',
+    'prata': '#C0C0C0',
+    'platina': '#E5E4E2',
+    
+    // Neutros
+    'natural': '#D2B48C',
+    'crú': '#F5DEB3',
+    'cru': '#F5DEB3',
+    'linho': '#FAF0E6',
+    'areia': '#F4A460',
+    'terra': '#8B4513',
+    'concreto': '#959595',
+    'cimento': '#7F7F7F',
+    'grafite escuro': '#2F2F2F',
+    'carbono': '#333333',
+    'titânio': '#878787',
+    'titanio': '#878787'
+};
+
+// ============================================
+// FUNÇÃO INTELIGENTE DE CORES
+// ============================================
+function getColorCode(cor) {
+    if (!cor || typeof cor !== 'string') return '#ddd';
+    
+    // Normalizar: remover acentos, lowercase, trim
+    let corNormalizada = cor.toLowerCase().trim();
+    
+    // Remover acentos
+    corNormalizada = corNormalizada.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    // Tentar match exato primeiro
+    if (CORES_MOVELARIA[corNormalizada]) {
+        return CORES_MOVELARIA[corNormalizada];
+    }
+    
+    // Tentar match parcial (se a cor contém uma palavra-chave)
+    for (let [nome, hex] of Object.entries(CORES_MOVELARIA)) {
+        // Verificar se a cor informada contém o nome da cor ou vice-versa
+        if (corNormalizada.includes(nome) || nome.includes(corNormalizada)) {
+            return hex;
+        }
+    }
+    
+    // Tentar encontrar palavras individuais
+    const palavras = corNormalizada.split(/\s+/);
+    for (let palavra of palavras) {
+        if (palavra.length > 2 && CORES_MOVELARIA[palavra]) {
+            return CORES_MOVELARIA[palavra];
+        }
+    }
+    
+    // Se não encontrou nada, gerar uma cor baseada no nome (hash)
+    // Isso garante que a mesma cor sempre terá o mesmo hex, mas diferentes cores terão hex diferentes
+    return gerarCorDoNome(corNormalizada);
+}
+
+// Gerar cor consistente baseada no nome (para cores desconhecidas)
+function gerarCorDoNome(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Gerar cor pastel (mais suave para móveis)
+    const h = Math.abs(hash % 360);
+    const s = 25 + Math.abs((hash >> 8) % 35); // Saturação baixa (25-60%)
+    const l = 60 + Math.abs((hash >> 16) % 25); // Luminosidade média-alta (60-85%)
+    
+    return hslToHex(h, s, l);
+}
+
+// Converter HSL para HEX
+function hslToHex(h, s, l) {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// ============================================
 // INICIALIZAÇÃO
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Ribeiro] 🚀 Iniciando app v3.1 (sem backup local)...');
+    console.log('[Ribeiro] 🚀 Iniciando app v3.2 (cores corrigidas)...');
 
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
         console.log('[Ribeiro] ✅ Firebase inicializado');
         
-        // Limpar cache antigo se existir (liberar espaço)
+        // Limpar cache antigo
         try {
             localStorage.removeItem('produtos_backup');
-            console.log('[Ribeiro] 🧹 Cache antigo removido');
-        } catch(e) {
-            console.log('[Ribeiro] ℹ️ Nenhum cache para remover');
-        }
+        } catch(e) {}
         
         carregarProdutosFirebase();
     } catch (e) {
@@ -57,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
-// CARREGAR PRODUTOS - SEM BACKUP LOCAL
+// CARREGAR PRODUTOS
 // ============================================
 function carregarProdutosFirebase() {
     const grid = document.getElementById('produtosGrid');
@@ -70,12 +263,10 @@ function carregarProdutosFirebase() {
         `;
     }
 
-    // Remover listener anterior se existir
     if (firebaseListener) {
         firebaseListener.off();
     }
 
-    // Criar novo listener
     const produtosRef = db.ref('produtos');
     
     firebaseListener = produtosRef.on('value', function(snapshot) {
@@ -83,12 +274,10 @@ function carregarProdutosFirebase() {
         console.log('[Ribeiro] 📥 Dados recebidos:', dados ? Object.keys(dados).length : 0, 'itens');
 
         if (dados) {
-            // Converter objeto em array
             produtos = Object.keys(dados).map(function(key) {
                 return { 
                     id: key, 
                     ...dados[key],
-                    // Garantir ordem válida
                     ordem: (dados[key].ordem !== undefined && dados[key].ordem !== null) 
                         ? parseInt(dados[key].ordem) 
                         : 999999
@@ -127,12 +316,10 @@ function renderProdutos(filtro, subcategoria) {
         return;
     }
 
-    // Ordenar produtos
     let produtosOrdenados = [...produtos].sort(function(a, b) {
         return a.ordem - b.ordem;
     });
 
-    // Aplicar filtros
     let filtrados;
     if (filtro === 'todos') {
         filtrados = produtosOrdenados;
@@ -151,7 +338,6 @@ function renderProdutos(filtro, subcategoria) {
         return;
     }
 
-    // Criar todos os cards
     const fragment = document.createDocumentFragment();
     
     filtrados.forEach(function(produto) {
@@ -159,8 +345,6 @@ function renderProdutos(filtro, subcategoria) {
     });
 
     grid.appendChild(fragment);
-    
-    console.log('[Ribeiro] ✅ Renderizados:', filtrados.length, 'cards');
 
     // Atualizar botões ativos
     document.querySelectorAll('.ambiente-btn').forEach(function(btn) {
@@ -179,8 +363,10 @@ function createProdutoCard(produto) {
     card.className = 'produto-card';
     card.onclick = function() { openModal(produto); };
 
+    // Processar cores com a nova função inteligente
     var cores = (produto.cores || []).slice(0, 4).map(function(cor) {
-        return '<span class="color-dot" style="background-color: ' + getColorCode(cor) + '" title="' + cor + '"></span>';
+        const corHex = getColorCode(cor);
+        return '<span class="color-dot" style="background-color: ' + corHex + '" title="' + cor + '"></span>';
     }).join('');
 
     var imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : '';
@@ -238,10 +424,12 @@ function openModal(produto) {
         dispContainer.innerHTML = '';
     }
 
+    // Cores no modal também usando a função inteligente
     var coresContainer = document.getElementById('colorOptions');
     var cores = produto.cores || [];
     coresContainer.innerHTML = cores.map(function(cor, idx) {
-        return '<span class="color-option ' + (idx === 0 ? 'active' : '') + '" onclick="selectColor(this)">' + cor + '</span>';
+        const corHex = getColorCode(cor);
+        return '<span class="color-option ' + (idx === 0 ? 'active' : '') + '" onclick="selectColor(this)" style="border-color: ' + corHex + '">' + cor + '</span>';
     }).join('');
 
     updateGallery();
@@ -316,18 +504,6 @@ function formatarPreco(preco) {
     return preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function getColorCode(cor) {
-    if (!cor) return '#ddd';
-    var cores = {
-        'marrom': '#8B4513', 'bege': '#F5F5DC', 'cinza': '#808080', 'branco': '#FFFFFF', 'preto': '#000000',
-        'madeira': '#DEB887', 'carvalho': '#D2691E', 'nogueira': '#654321', 'vinho': '#722F37',
-        'azul marinho': '#000080', 'azul': '#0000FF', 'vermelho': '#FF0000', 'verde': '#008000',
-        'amarelo': '#FFFF00', 'rosa': '#FFC0CB', 'roxo': '#800080', 'laranja': '#FFA500',
-        'off white': '#F5F5F5', 'grafite': '#414141', 'offwhite': '#F5F5F5', 'off-white': '#F5F5F5'
-    };
-    return cores[cor.toLowerCase().trim()] || '#ddd';
-}
-
 function mostrarErro(mensagem) {
     const grid = document.getElementById('produtosGrid');
     if (grid) {
@@ -356,4 +532,4 @@ var style = document.createElement('style');
 style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
 document.head.appendChild(style);
 
-console.log('[Ribeiro] ✅ App.js v3.1 carregado (sem backup local)');
+console.log('[Ribeiro] ✅ App.js v3.2 carregado (cores inteligentes)');
