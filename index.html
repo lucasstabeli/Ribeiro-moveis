@@ -240,7 +240,6 @@
 
         .gold-divider span { color: var(--dourado); }
 
-        /* CORREÇÃO DROPDOWN - Z-INDEX E POSICIONAMENTO */
         .ambientes-menu {
             display: flex;
             justify-content: center;
@@ -361,6 +360,7 @@
             margin-bottom: 12px;
         }
 
+        /* CORREÇÃO: Bolinhas de cor com borda preta fina */
         .produto-colors {
             display: flex;
             gap: 6px;
@@ -371,8 +371,15 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            border: 2px solid transparent;
+            /* Borda preta fina sempre visível */
+            border: 1px solid #333;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.3);
             cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .color-dot:hover {
+            transform: scale(1.2);
         }
 
         .produto-btn {
@@ -615,7 +622,6 @@
             z-index: 100;
         }
 
-        /* CORREÇÃO MODAL - SCROLL E DIMENSÕES */
         .modal {
             display: none;
             position: fixed;
@@ -764,20 +770,18 @@
             font-size: 0.9rem;
         }
 
-        /* CORREÇÃO: DIMENSÕES EM COLUNA NO MOBILE */
         .dimensoes-row {
             display: flex;
-            gap: 8px;
-            flex-wrap: nowrap;  /* importante! */
-            overflow-x: auto;   /* scroll horizontal se não couber */
+            gap: 15px;
+            flex-wrap: wrap;
         }
-        
+
         .dimensao-item-compacta {
             display: flex;
             align-items: center;
-            gap: 5px;
-            white-space: nowrap;  /* não quebra texto */
-            font-size: 0.85rem;
+            gap: 8px;
+            flex: 1;
+            min-width: 100px;
         }
 
         .dimensao-item-compacta i {
@@ -791,6 +795,7 @@
             font-size: 0.8rem;
         }
 
+        /* CORREÇÃO: Cores no modal também com borda */
         .color-options {
             display: flex;
             gap: 8px;
@@ -804,6 +809,7 @@
             color: var(--vinho);
             cursor: pointer;
             font-size: 0.85rem;
+            transition: all 0.3s;
         }
 
         .color-option:hover, .color-option.active {
@@ -842,7 +848,6 @@
             z-index: 999;
         }
 
-        /* CORREÇÕES MOBILE */
         @media (max-width: 768px) {
             .header { height: 70px; }
             .logo-header-img { height: 90px; }
@@ -883,7 +888,7 @@
 
             .gold-line {
                 width: 100px;
-                margin: 25px auto 15px;
+                margin-bottom: 15px;
             }
 
             .produtos { padding: 40px 0; }
@@ -891,7 +896,6 @@
             .ambientes-menu { gap: 6px; }
             .ambiente-btn { padding: 8px 12px; font-size: 0.7rem; }
 
-            /* CORREÇÃO DROPDOWN MOBILE */
             .subcategorias-dropdown {
                 position: fixed !important;
                 left: 50% !important;
@@ -922,7 +926,6 @@
             .contato-grid { grid-template-columns: 1fr; gap: 25px; }
             .contato-map { min-height: 250px; order: -1; }
 
-            /* CORREÇÃO MODAL MOBILE - SCROLL E DIMENSÕES */
             .modal {
                 padding: 0;
                 background: rgba(61, 15, 15, 1);
@@ -952,7 +955,6 @@
                 padding-bottom: 100px;
             }
 
-            /* CORREÇÃO: DIMENSÕES EM COLUNA */
             .dimensoes-row { 
                 flex-direction: column; 
                 gap: 8px; 
@@ -969,6 +971,7 @@
             .hero-logo-wrap { width: 180px; }
         }
     </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -1425,7 +1428,6 @@
             fecharTodosDropdowns();
         }
 
-        // CORREÇÃO DROPDOWN MOBILE
         function toggleDropdownMobile(element) {
             if (window.innerWidth <= 768) {
                 document.querySelectorAll('.ambiente-item').forEach(item => {
@@ -1560,5 +1562,3 @@
     </script>
 </body>
 </html>
-
-
