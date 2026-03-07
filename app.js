@@ -1,7 +1,7 @@
 // ============================================
-// RIBEIRIO MÓVEIS - APP.JS v2.0 CORRIGIDO
-// PROBLEMA: Produto 28+ não aparecia
-// SOLUÇÃO: Forçar re-render, corrigir ordenação, limpar cache
+// RIBEIRIO MÓVEIS - APP.JS v3.1 (SEM BACKUP LOCAL)
+// PROBLEMA: LocalStorage cheio (QuotaExceededError)
+// SOLUÇÃO: Remover backup local, buscar sempre do Firebase
 // ============================================
 
 let produtos = [];
@@ -34,15 +34,20 @@ const AMBIENTES = {
 // INICIALIZAÇÃO
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Ribeiro] 🚀 Iniciando app v2.0...');
+    console.log('[Ribeiro] 🚀 Iniciando app v3.1 (sem backup local)...');
 
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
         console.log('[Ribeiro] ✅ Firebase inicializado');
         
-        // LIMPAR CACHE ANTIGO (resolver problemas de sync)
-        limparCacheAntigo();
+        // Limpar cache antigo se existir (liberar espaço)
+        try {
+            localStorage.removeItem('produtos_backup');
+            console.log('[Ribeiro] 🧹 Cache antigo removido');
+        } catch(e) {
+            console.log('[Ribeiro] ℹ️ Nenhum cache para remover');
+        }
         
         carregarProdutosFirebase();
     } catch (e) {
@@ -52,16 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
-// LIMPAR CACHE (IMPORTANTE!)
-// ============================================
-function limparCacheAntigo() {
-    // Forçar limpeza do cache se necessário (descomente se quiser limpar tudo)
-    // localStorage.removeItem('produtos_backup');
-    console.log('[Ribeiro] Cache verificado');
-}
-
-// ============================================
-// CARREGAR PRODUTOS - VERSÃO CORRIGIDA
+// CARREGAR PRODUTOS - SEM BACKUP LOCAL
 // ============================================
 function carregarProdutosFirebase() {
     const grid = document.getElementById('produtosGrid');
@@ -77,7 +73,6 @@ function carregarProdutosFirebase() {
     // Remover listener anterior se existir
     if (firebaseListener) {
         firebaseListener.off();
-        console.log('[Ribeiro] Listener anterior removido');
     }
 
     // Criar novo listener
@@ -85,77 +80,42 @@ function carregarProdutosFirebase() {
     
     firebaseListener = produtosRef.on('value', function(snapshot) {
         const dados = snapshot.val();
-        console.log('[Ribeiro] 📥 Dados brutos recebidos:', dados ? Object.keys(dados).length : 0, 'itens');
+        console.log('[Ribeiro] 📥 Dados recebidos:', dados ? Object.keys(dados).length : 0, 'itens');
 
         if (dados) {
             // Converter objeto em array
-            const novosProdutos = Object.keys(dados).map(function(key) {
-                const produto = dados[key];
+            produtos = Object.keys(dados).map(function(key) {
                 return { 
                     id: key, 
-                    ...produto,
-                    // CORREÇÃO CRÍTICA: Garantir que ordem seja número válido
-                    ordem: (produto.ordem !== undefined && produto.ordem !== null) 
-                        ? parseInt(produto.ordem) 
+                    ...dados[key],
+                    // Garantir ordem válida
+                    ordem: (dados[key].ordem !== undefined && dados[key].ordem !== null) 
+                        ? parseInt(dados[key].ordem) 
                         : 999999
                 };
             });
 
-            console.log('[Ribeiro] ✅ Produtos processados:', novosProdutos.length);
-            
-            // Log dos últimos produtos para debug
-            if (novosProdutos.length > 0) {
-                const ultimos = novosProdutos.slice(-3);
-                console.log('[Ribeiro] Últimos produtos:', ultimos.map(p => ({id: p.id, nome: p.nome, ordem: p.ordem})));
-            }
-
-            // Atualizar array global
-            produtos = novosProdutos;
-
-            // Salvar backup
-            localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-
-            // Renderizar imediatamente
+            console.log('[Ribeiro] ✅ Produtos processados:', produtos.length);
             renderProdutos('todos');
             
         } else {
-            console.log('[Ribeiro] ⚠️ Nenhum dado encontrado');
             produtos = [];
             renderProdutos('todos');
         }
     }, function(error) {
         console.error('[Ribeiro] ❌ Erro Firebase:', error);
-        
-        // Tentar usar backup em caso de erro
-        const backup = localStorage.getItem('produtos_backup');
-        if (backup) {
-            try {
-                produtos = JSON.parse(backup);
-                console.log('[Ribeiro] 📦 Usando backup:', produtos.length, 'produtos');
-                renderProdutos('todos');
-            } catch (e) {
-                mostrarErro('Erro ao carregar produtos');
-            }
-        } else {
-            mostrarErro('Erro de conexão');
-        }
+        mostrarErro('Erro ao carregar produtos. Verifique sua conexão.');
     });
 }
 
 // ============================================
-// RENDERIZAÇÃO - VERSÃO CORRIGIDA (SEM LIMITE!)
+// RENDERIZAÇÃO
 // ============================================
 function renderProdutos(filtro, subcategoria) {
     const grid = document.getElementById('produtosGrid');
-    if (!grid) {
-        console.error('[Ribeiro] ❌ Grid não encontrado!');
-        return;
-    }
+    if (!grid) return;
 
-    // Limpar grid completamente
     grid.innerHTML = '';
-
-    console.log('[Ribeiro] 🎨 Renderizando', produtos.length, 'produtos. Filtro:', filtro);
 
     if (produtos.length === 0) {
         grid.innerHTML = `
@@ -167,11 +127,9 @@ function renderProdutos(filtro, subcategoria) {
         return;
     }
 
-    // CORREÇÃO: Ordenar garantindo que todos apareçam
+    // Ordenar produtos
     let produtosOrdenados = [...produtos].sort(function(a, b) {
-        const ordemA = (a.ordem !== undefined && a.ordem !== null) ? parseInt(a.ordem) : 999999;
-        const ordemB = (b.ordem !== undefined && b.ordem !== null) ? parseInt(b.ordem) : 999999;
-        return ordemA - ordemB;
+        return a.ordem - b.ordem;
     });
 
     // Aplicar filtros
@@ -188,22 +146,16 @@ function renderProdutos(filtro, subcategoria) {
         });
     }
 
-    console.log('[Ribeiro] 📊 Produtos filtrados:', filtrados.length);
-
     if (filtrados.length === 0) {
         grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px;"><p style="color: #666;">Nenhum produto encontrado nesta categoria.</p></div>';
         return;
     }
 
-    // CRIAR TODOS OS CARDS (SEM LIMITE!)
+    // Criar todos os cards
     const fragment = document.createDocumentFragment();
     
-    filtrados.forEach(function(produto, index) {
-        const card = createProdutoCard(produto);
-        // Adicionar data attribute para debug
-        card.setAttribute('data-produto-id', produto.id);
-        card.setAttribute('data-produto-ordem', produto.ordem);
-        fragment.appendChild(card);
+    filtrados.forEach(function(produto) {
+        fragment.appendChild(createProdutoCard(produto));
     });
 
     grid.appendChild(fragment);
@@ -211,17 +163,12 @@ function renderProdutos(filtro, subcategoria) {
     console.log('[Ribeiro] ✅ Renderizados:', filtrados.length, 'cards');
 
     // Atualizar botões ativos
-    atualizarBotoesAtivos(filtro);
-}
-
-function atualizarBotoesAtivos(filtroAtivo) {
     document.querySelectorAll('.ambiente-btn').forEach(function(btn) {
         btn.classList.remove('active');
-        const onclick = btn.getAttribute('onclick') || '';
-        
-        if (filtroAtivo === 'todos' && onclick.includes("'todos'")) {
+        var onclick = btn.getAttribute('onclick') || '';
+        if (filtro === 'todos' && onclick.includes("'todos'")) {
             btn.classList.add('active');
-        } else if (filtroAtivo !== 'todos' && onclick.includes("'" + filtroAtivo + "'")) {
+        } else if (filtro !== 'todos' && onclick.includes("'" + filtro + "'")) {
             btn.classList.add('active');
         }
     });
@@ -257,17 +204,12 @@ function createProdutoCard(produto) {
     return card;
 }
 
-// ============================================
-// FUNÇÕES DE FILTRO
-// ============================================
 function filtrarProdutos(ambiente) {
-    console.log('[Ribeiro] 🔍 Filtrando por ambiente:', ambiente);
     renderProdutos(ambiente);
 }
 
 function filtrarSubcategoria(ambiente, subcategoria) {
     if (event) event.stopPropagation();
-    console.log('[Ribeiro] 🔍 Filtrando por subcategoria:', ambiente, '>', subcategoria);
     renderProdutos(ambiente, subcategoria);
 }
 
@@ -393,7 +335,7 @@ function mostrarErro(mensagem) {
             <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
                 <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 15px;"></i>
                 <p style="color: #666; margin-bottom: 15px;">${mensagem || 'Erro ao carregar produtos.'}</p>
-                <button onclick="location.reload()" style="padding: 10px 20px; background: #5D1A1A; color: #D4AF37; border: none; cursor: pointer; border-radius: 5px;">
+                <button onclick="carregarProdutosFirebase()" style="padding: 10px 20px; background: #5D1A1A; color: #D4AF37; border: none; cursor: pointer; border-radius: 5px;">
                     <i class="fas fa-sync"></i> Recarregar
                 </button>
             </div>
@@ -414,4 +356,4 @@ var style = document.createElement('style');
 style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
 document.head.appendChild(style);
 
-console.log('[Ribeiro] ✅ App.js v2.0 carregado completamente');
+console.log('[Ribeiro] ✅ App.js v3.1 carregado (sem backup local)');
