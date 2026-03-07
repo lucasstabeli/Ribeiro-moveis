@@ -232,6 +232,16 @@
             flex-direction: column;
         }
 
+        .form-box {
+            max-height: 85vh;
+        }
+
+        /* CORREÇÃO: Lista com altura garantida e scroll */
+        .lista-box {
+            min-height: 400px;
+            max-height: 85vh;
+        }
+
         .box-header {
             padding: 12px 15px;
             background: var(--vinho);
@@ -241,12 +251,30 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .box-content {
             flex: 1;
             overflow-y: auto;
             padding: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dourado) #f0f0f0;
+        }
+
+        /* Scrollbar estilizada para Chrome */
+        .box-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .box-content::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        .box-content::-webkit-scrollbar-thumb {
+            background: var(--dourado);
+            border-radius: 4px;
         }
 
         .form-group-compact {
@@ -449,6 +477,7 @@
             margin-right: 10px;
             border: 2px solid var(--dourado);
             pointer-events: none;
+            background: #f5f5f5;
         }
 
         .produto-info-compact {
@@ -588,7 +617,6 @@
             cursor: grabbing;
         }
 
-        /* Estilo para o item sendo arrastado no mobile */
         .sortable-ghost {
             opacity: 0.4;
             background: var(--creme);
@@ -606,7 +634,7 @@
                 grid-template-columns: 1fr;
             }
             .form-box { max-height: 50vh; }
-            .lista-box { max-height: 40vh; }
+            .lista-box { max-height: 40vh; min-height: 300px; }
         }
 
         @media (max-width: 600px) {
@@ -620,6 +648,7 @@
             .form-row-compact { grid-template-columns: 1fr; }
         }
     </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -811,7 +840,6 @@
         let db = null;
         let storage = null;
 
-        // Variáveis para drag and drop touch
         let draggedItem = null;
         let draggedIndex = null;
         let touchStartY = 0;
@@ -1085,6 +1113,16 @@
                     await db.ref('produtos/' + novoId).set(produto);
                 }
 
+                // CORREÇÃO: Forçar atualização imediata
+                await carregarProdutosFirebase();
+                atualizarLista();
+
+                // Scroll para o topo para ver o novo produto
+                setTimeout(() => {
+                    const lista = document.getElementById('listaProdutos');
+                    if (lista) lista.scrollTop = 0;
+                }, 100);
+
                 limparFormulario();
                 alert('✅ Produto salvo com sucesso! Código: ' + codigo);
             } catch (error) {
@@ -1095,6 +1133,7 @@
             }
         }
 
+        // CORREÇÃO: Função atualizarLista melhorada
         function atualizarLista() {
             const container = document.getElementById('listaProdutos');
             const contador = document.getElementById('contadorProdutos');
@@ -1105,7 +1144,30 @@
                 return;
             }
 
-            container.innerHTML = produtos.map(produto => '<div class="produto-item-compact" data-id="' + produto.id + '"><img src="' + produto.imagens[0] + '" alt="' + produto.nome + '"><div class="produto-info-compact"><div><span class="codigo-badge-compact">' + (produto.codigo || '----') + '</span><span style="font-size: 0.75rem; color: #666;">' + produto.ambiente + '</span></div><h4>' + produto.nome + '</h4><div class="preco">R$ ' + produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</div></div><div class="produto-acoes-compact"><button class="btn-acao-compact btn-editar-compact" onclick="editarProduto(\'' + produto.id + '\')" title="Editar"><i class="fas fa-edit"></i></button><button class="btn-acao-compact btn-excluir-compact" onclick="excluirProduto(\'' + produto.id + '\')" title="Excluir"><i class="fas fa-trash"></i></button></div></div>').join('');
+            // Ordenar por ordem
+            produtos.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+            const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%23ddd' width='50' height='50'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ESem%3C/text%3E%3C/svg%3E";
+
+            container.innerHTML = produtos.map(produto => {
+                const imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : svgPlaceholder;
+
+                return `<div class="produto-item-compact" data-id="${produto.id}">
+                    <img src="${imgSrc}" alt="${produto.nome}" loading="lazy" onerror="this.src='${svgPlaceholder}'">
+                    <div class="produto-info-compact">
+                        <div>
+                            <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
+                            <span style="font-size: 0.75rem; color: #666;">${produto.ambiente}</span>
+                        </div>
+                        <h4>${produto.nome}</h4>
+                        <div class="preco">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="produto-acoes-compact">
+                        <button class="btn-acao-compact btn-editar-compact" onclick="editarProduto('${produto.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-acao-compact btn-excluir-compact" onclick="excluirProduto('${produto.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
         function editarProduto(id) {
@@ -1198,21 +1260,16 @@
 
             container.innerHTML = filtrados.map((produto, index) => '<div class="produto-item-compact" draggable="true" data-id="' + produto.id + '" data-index="' + index + '"><i class="fas fa-grip-vertical drag-handle"></i><img src="' + produto.imagens[0] + '" alt="' + produto.nome + '" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 2px solid var(--dourado);"><div style="flex: 1;"><h4 style="color: var(--vinho); font-size: 0.95rem; margin-bottom: 3px;">' + produto.nome + '</h4><div style="font-size: 0.8rem; color: #666;"><span class="codigo-badge-compact">' + (produto.codigo || '----') + '</span>' + produto.ambiente + ' | ' + produto.subcategoria + '</div></div><div style="color: #25D366; font-weight: bold;">R$ ' + produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</div></div>').join('');
 
-            // Inicializa drag and drop com suporte a touch
             inicializarDragAndDrop(container);
         }
 
-        // SISTEMA DE DRAG AND DROP UNIVERSAL (MOUSE + TOUCH)
         function inicializarDragAndDrop(container) {
             const items = container.querySelectorAll('.produto-item-compact');
 
             items.forEach((item, index) => {
-                // Mouse events
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragend', handleDragEnd);
                 item.addEventListener('dragover', handleDragOver);
-
-                // Touch events
                 item.addEventListener('touchstart', handleTouchStart, {passive: false});
                 item.addEventListener('touchmove', handleTouchMove, {passive: false});
                 item.addEventListener('touchend', handleTouchEnd);
@@ -1248,28 +1305,17 @@
             }
         }
 
-        // TOUCH EVENTS PARA MOBILE
         function handleTouchStart(e) {
             e.preventDefault();
             draggedItem = this;
             draggedIndex = parseInt(this.getAttribute('data-index'));
-
             touchStartY = e.touches[0].clientY;
-
-            // Cria placeholder
-            placeholder = document.createElement('div');
-            placeholder.className = 'produto-item-compact';
-            placeholder.style.opacity = '0.3';
-            placeholder.style.border = '2px dashed var(--dourado)';
-            placeholder.innerHTML = this.innerHTML;
-
             this.classList.add('dragging');
         }
 
         function handleTouchMove(e) {
             e.preventDefault();
             if (!draggedItem) return;
-
             touchCurrentY = e.touches[0].clientY;
 
             const container = document.getElementById('ordenarLista');
@@ -1281,7 +1327,6 @@
             items.forEach(item => {
                 const rect = item.getBoundingClientRect();
                 const offset = touchCurrentY - rect.top - rect.height / 2;
-
                 if (offset < 0 && offset > closestOffset) {
                     closestOffset = offset;
                     closestItem = item;
@@ -1300,10 +1345,6 @@
                 draggedItem.classList.remove('dragging');
                 draggedItem = null;
             }
-            if (placeholder) {
-                placeholder.remove();
-                placeholder = null;
-            }
         }
 
         async function salvarOrdem() {
@@ -1315,24 +1356,19 @@
 
             try {
                 const atualizacoes = {};
-
                 items.forEach((item, index) => {
                     const id = item.getAttribute('data-id');
                     atualizacoes['produtos/' + id + '/ordem'] = index;
                 });
-
                 await db.ref().update(atualizacoes);
 
                 items.forEach((item, index) => {
                     const id = item.getAttribute('data-id');
                     const produto = produtos.find(p => p.id === id);
-                    if (produto) {
-                        produto.ordem = index;
-                    }
+                    if (produto) produto.ordem = index;
                 });
 
                 localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-
                 alert('✅ Ordem salva com sucesso!');
             } catch (error) {
                 console.error('Erro ao salvar ordem:', error);
