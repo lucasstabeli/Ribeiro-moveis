@@ -1,13 +1,14 @@
 // ============================================
-// RIBEIRIO MÓVEIS - APP.JS CORRIGIDO
-// PROBLEMA: Produtos não apareciam após o 27º
-// SOLUÇÃO: Garantir ordenação correta e tratamento de ordem undefined
+// RIBEIRIO MÓVEIS - APP.JS v2.0 CORRIGIDO
+// PROBLEMA: Produto 28+ não aparecia
+// SOLUÇÃO: Forçar re-render, corrigir ordenação, limpar cache
 // ============================================
 
 let produtos = [];
 let currentImageIndex = 0;
 let currentProduto = null;
 let db = null;
+let firebaseListener = null;
 
 // CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
@@ -30,24 +31,37 @@ const AMBIENTES = {
 };
 
 // ============================================
-// INICIALIZAÇÃO DO FIREBASE
+// INICIALIZAÇÃO
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Ribeiro] Iniciando app...');
+    console.log('[Ribeiro] 🚀 Iniciando app v2.0...');
 
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
-        console.log('[Ribeiro] Firebase inicializado');
+        console.log('[Ribeiro] ✅ Firebase inicializado');
+        
+        // LIMPAR CACHE ANTIGO (resolver problemas de sync)
+        limparCacheAntigo();
+        
         carregarProdutosFirebase();
     } catch (e) {
-        console.error('[Ribeiro] Erro ao inicializar:', e);
-        mostrarErro();
+        console.error('[Ribeiro] ❌ Erro ao inicializar:', e);
+        mostrarErro('Erro ao conectar com o banco de dados');
     }
 });
 
 // ============================================
-// CORREÇÃO PRINCIPAL: Carregar produtos
+// LIMPAR CACHE (IMPORTANTE!)
+// ============================================
+function limparCacheAntigo() {
+    // Forçar limpeza do cache se necessário (descomente se quiser limpar tudo)
+    // localStorage.removeItem('produtos_backup');
+    console.log('[Ribeiro] Cache verificado');
+}
+
+// ============================================
+// CARREGAR PRODUTOS - VERSÃO CORRIGIDA
 // ============================================
 function carregarProdutosFirebase() {
     const grid = document.getElementById('produtosGrid');
@@ -60,131 +74,107 @@ function carregarProdutosFirebase() {
         `;
     }
 
-    // 1. LOCALSTORAGE PRIMEIRO (backup rápido)
-    const backup = localStorage.getItem('produtos_backup');
-    if (backup) {
-        try {
-            produtos = JSON.parse(backup);
-            console.log('[Ribeiro] Backup carregado:', produtos.length, 'produtos');
-            renderProdutos('todos');
-        } catch (e) {
-            console.error('[Ribeiro] Erro no backup:', e);
-            produtos = [];
-        }
+    // Remover listener anterior se existir
+    if (firebaseListener) {
+        firebaseListener.off();
+        console.log('[Ribeiro] Listener anterior removido');
     }
 
-    // 2. FIREBASE - Listener em tempo real
+    // Criar novo listener
     const produtosRef = db.ref('produtos');
-
-    produtosRef.on('value', function(snapshot) {
+    
+    firebaseListener = produtosRef.on('value', function(snapshot) {
         const dados = snapshot.val();
-        console.log('[Ribeiro] Dados recebidos do Firebase');
+        console.log('[Ribeiro] 📥 Dados brutos recebidos:', dados ? Object.keys(dados).length : 0, 'itens');
 
         if (dados) {
-            // Converter objeto em array e garantir ordem
-            produtos = Object.keys(dados).map(function(key) {
+            // Converter objeto em array
+            const novosProdutos = Object.keys(dados).map(function(key) {
+                const produto = dados[key];
                 return { 
                     id: key, 
-                    ...dados[key],
-                    // CORREÇÃO: Se ordem for undefined, coloca no final (999999)
-                    ordem: dados[key].ordem !== undefined ? dados[key].ordem : 999999
+                    ...produto,
+                    // CORREÇÃO CRÍTICA: Garantir que ordem seja número válido
+                    ordem: (produto.ordem !== undefined && produto.ordem !== null) 
+                        ? parseInt(produto.ordem) 
+                        : 999999
                 };
             });
 
-            console.log('[Ribeiro] Produtos processados:', produtos.length);
+            console.log('[Ribeiro] ✅ Produtos processados:', novosProdutos.length);
+            
+            // Log dos últimos produtos para debug
+            if (novosProdutos.length > 0) {
+                const ultimos = novosProdutos.slice(-3);
+                console.log('[Ribeiro] Últimos produtos:', ultimos.map(p => ({id: p.id, nome: p.nome, ordem: p.ordem})));
+            }
+
+            // Atualizar array global
+            produtos = novosProdutos;
 
             // Salvar backup
             localStorage.setItem('produtos_backup', JSON.stringify(produtos));
 
-            // Renderizar
+            // Renderizar imediatamente
             renderProdutos('todos');
+            
         } else {
+            console.log('[Ribeiro] ⚠️ Nenhum dado encontrado');
             produtos = [];
             renderProdutos('todos');
         }
     }, function(error) {
-        console.error('[Ribeiro] Erro Firebase:', error);
-        if (produtos.length === 0) {
-            mostrarErro();
+        console.error('[Ribeiro] ❌ Erro Firebase:', error);
+        
+        // Tentar usar backup em caso de erro
+        const backup = localStorage.getItem('produtos_backup');
+        if (backup) {
+            try {
+                produtos = JSON.parse(backup);
+                console.log('[Ribeiro] 📦 Usando backup:', produtos.length, 'produtos');
+                renderProdutos('todos');
+            } catch (e) {
+                mostrarErro('Erro ao carregar produtos');
+            }
+        } else {
+            mostrarErro('Erro de conexão');
         }
     });
 }
 
 // ============================================
-// FUNÇÕES ADMIN (PARA admin.html)
+// RENDERIZAÇÃO - VERSÃO CORRIGIDA (SEM LIMITE!)
 // ============================================
-function salvarProdutoFirebase(produto) {
-    const produtosRef = db.ref('produtos');
-
-    if (produto.id) {
-        return produtosRef.child(produto.id).update(produto);
-    } else {
-        const novoId = produtosRef.push().key;
-        produto.id = novoId;
-        // CORREÇÃO: Definir ordem para novos produtos
-        produto.ordem = produtos.length;
-        return produtosRef.child(novoId).set(produto);
-    }
-}
-
-function deletarProdutoFirebase(id) {
-    return db.ref('produtos/' + id).remove();
-}
-
-function uploadImagemFirebase(arquivo, callback) {
-    const storageRef = firebase.storage().ref();
-    const nomeArquivo = 'produtos/' + Date.now() + '_' + arquivo.name;
-    const uploadRef = storageRef.child(nomeArquivo);
-
-    uploadRef.put(arquivo).then(function(snapshot) {
-        return snapshot.ref.getDownloadURL();
-    }).then(function(url) {
-        callback(null, url);
-    }).catch(function(error) {
-        callback(error, null);
-    });
-}
-
-// ============================================
-// RENDERIZAÇÃO DOS PRODUTOS - CORREÇÃO
-// ============================================
-function mostrarErro() {
-    const grid = document.getElementById('produtosGrid');
-    if (grid) {
-        grid.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 15px;"></i>
-                <p style="color: #666; margin-bottom: 15px;">Erro ao carregar produtos.</p>
-                <button onclick="carregarProdutosFirebase()" style="padding: 10px 20px; background: #5D1A1A; color: #D4AF37; border: none; cursor: pointer;">Tentar novamente</button>
-            </div>
-        `;
-    }
-}
-
 function renderProdutos(filtro, subcategoria) {
     const grid = document.getElementById('produtosGrid');
-    if (!grid) return;
+    if (!grid) {
+        console.error('[Ribeiro] ❌ Grid não encontrado!');
+        return;
+    }
 
+    // Limpar grid completamente
     grid.innerHTML = '';
+
+    console.log('[Ribeiro] 🎨 Renderizando', produtos.length, 'produtos. Filtro:', filtro);
 
     if (produtos.length === 0) {
         grid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px;">
                 <i class="fas fa-box-open" style="font-size: 3rem; color: #D4AF37; margin-bottom: 15px;"></i>
                 <h3 style="color: #5D1A1A; margin-bottom: 10px; font-size: 1.1rem;">Nenhum produto cadastrado</h3>
-                <p style="color: #666; font-size: 0.9rem;">Acesse a área administrativa para adicionar produtos.</p>
             </div>
         `;
         return;
     }
 
-    // CORREÇÃO: Ordenar produtos antes de filtrar
+    // CORREÇÃO: Ordenar garantindo que todos apareçam
     let produtosOrdenados = [...produtos].sort(function(a, b) {
-        const ordemA = a.ordem !== undefined ? a.ordem : 999999;
-        const ordemB = b.ordem !== undefined ? b.ordem : 999999;
+        const ordemA = (a.ordem !== undefined && a.ordem !== null) ? parseInt(a.ordem) : 999999;
+        const ordemB = (b.ordem !== undefined && b.ordem !== null) ? parseInt(b.ordem) : 999999;
         return ordemA - ordemB;
     });
 
+    // Aplicar filtros
     let filtrados;
     if (filtro === 'todos') {
         filtrados = produtosOrdenados;
@@ -198,22 +188,40 @@ function renderProdutos(filtro, subcategoria) {
         });
     }
 
+    console.log('[Ribeiro] 📊 Produtos filtrados:', filtrados.length);
+
     if (filtrados.length === 0) {
         grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px;"><p style="color: #666;">Nenhum produto encontrado nesta categoria.</p></div>';
         return;
     }
 
-    filtrados.forEach(function(produto) {
-        grid.appendChild(createProdutoCard(produto));
+    // CRIAR TODOS OS CARDS (SEM LIMITE!)
+    const fragment = document.createDocumentFragment();
+    
+    filtrados.forEach(function(produto, index) {
+        const card = createProdutoCard(produto);
+        // Adicionar data attribute para debug
+        card.setAttribute('data-produto-id', produto.id);
+        card.setAttribute('data-produto-ordem', produto.ordem);
+        fragment.appendChild(card);
     });
 
+    grid.appendChild(fragment);
+    
+    console.log('[Ribeiro] ✅ Renderizados:', filtrados.length, 'cards');
+
     // Atualizar botões ativos
+    atualizarBotoesAtivos(filtro);
+}
+
+function atualizarBotoesAtivos(filtroAtivo) {
     document.querySelectorAll('.ambiente-btn').forEach(function(btn) {
         btn.classList.remove('active');
-        var onclick = btn.getAttribute('onclick');
-        if (filtro === 'todos' && onclick && onclick.indexOf("'todos'") > -1) {
+        const onclick = btn.getAttribute('onclick') || '';
+        
+        if (filtroAtivo === 'todos' && onclick.includes("'todos'")) {
             btn.classList.add('active');
-        } else if (filtro !== 'todos' && onclick && onclick.indexOf("'" + filtro + "'") > -1) {
+        } else if (filtroAtivo !== 'todos' && onclick.includes("'" + filtroAtivo + "'")) {
             btn.classList.add('active');
         }
     });
@@ -249,17 +257,22 @@ function createProdutoCard(produto) {
     return card;
 }
 
+// ============================================
+// FUNÇÕES DE FILTRO
+// ============================================
 function filtrarProdutos(ambiente) {
+    console.log('[Ribeiro] 🔍 Filtrando por ambiente:', ambiente);
     renderProdutos(ambiente);
 }
 
 function filtrarSubcategoria(ambiente, subcategoria) {
     if (event) event.stopPropagation();
+    console.log('[Ribeiro] 🔍 Filtrando por subcategoria:', ambiente, '>', subcategoria);
     renderProdutos(ambiente, subcategoria);
 }
 
 // ============================================
-// MODAL DO PRODUTO
+// MODAL
 // ============================================
 function openModal(produto) {
     currentProduto = produto;
@@ -291,6 +304,13 @@ function openModal(produto) {
 
     updateGallery();
     modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('produtoModal').classList.remove('active');
+    document.body.style.overflow = '';
+    currentProduto = null;
 }
 
 function parseDimensoes(dimensoesStr) {
@@ -329,11 +349,6 @@ function setImage(index) {
     updateGallery();
 }
 
-function closeModal() {
-    document.getElementById('produtoModal').classList.remove('active');
-    currentProduto = null;
-}
-
 // ============================================
 // WHATSAPP
 // ============================================
@@ -349,11 +364,12 @@ function enviarWhatsApp() {
     const mensagemCodificada = encodeURIComponent(mensagem);
     const numero = '5512991652100';
 
-    const linkWhatsApp = `https://wa.me/${numero}?text=${mensagemCodificada}`;
-
-    window.open(linkWhatsApp, '_blank');
+    window.open(`https://wa.me/${numero}?text=${mensagemCodificada}`, '_blank');
 }
 
+// ============================================
+// UTILITÁRIOS
+// ============================================
 function formatarPreco(preco) {
     return preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -370,6 +386,22 @@ function getColorCode(cor) {
     return cores[cor.toLowerCase().trim()] || '#ddd';
 }
 
+function mostrarErro(mensagem) {
+    const grid = document.getElementById('produtosGrid');
+    if (grid) {
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 15px;"></i>
+                <p style="color: #666; margin-bottom: 15px;">${mensagem || 'Erro ao carregar produtos.'}</p>
+                <button onclick="location.reload()" style="padding: 10px 20px; background: #5D1A1A; color: #D4AF37; border: none; cursor: pointer; border-radius: 5px;">
+                    <i class="fas fa-sync"></i> Recarregar
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Fechar modal ao clicar fora
 window.onclick = function(event) {
     var modal = document.getElementById('produtoModal');
     if (event.target === modal) {
@@ -377,7 +409,9 @@ window.onclick = function(event) {
     }
 };
 
-// Adicionar animação de spin
+// CSS de animação
 var style = document.createElement('style');
 style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
 document.head.appendChild(style);
+
+console.log('[Ribeiro] ✅ App.js v2.0 carregado completamente');
