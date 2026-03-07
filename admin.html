@@ -945,79 +945,35 @@
 
         // CORREÇÃO PRINCIPAL: Carregar produtos com tratamento de erro completo
         function carregarProdutosFirebase() {
-            log('Carregando produtos...');
-
-            // 1. PRIMEIRO: Tentar carregar do localStorage (fallback imediato)
+            console.log('=== CARREGANDO ===');
+            
+            // 1. LOCALSTORAGE PRIMEIRO
             const backup = localStorage.getItem('produtos_backup');
             if (backup) {
                 try {
                     produtos = JSON.parse(backup);
-                    log('Carregado ' + produtos.length + ' produtos do backup local');
+                    console.log('LocalStorage:', produtos.length);
                     atualizarLista();
                 } catch (e) {
-                    log('ERRO ao ler backup local: ' + e.message);
                     produtos = [];
                 }
-            } else {
-                log('Nenhum backup local encontrado');
-                produtos = [];
-                atualizarLista();
             }
-
-            // 2. DEPOIS: Configurar listener do Firebase
-            if (firebaseListener) {
-                firebaseListener.off(); // Remove listener antigo se existir
-                log('Listener anterior removido');
-            }
-
-            log('Configurando listener do Firebase...');
-
+        
+            // 2. FIREBASE
+            if (firebaseListener) firebaseListener.off();
+            
             firebaseListener = db.ref('produtos');
-
             firebaseListener.on('value', 
                 function(snapshot) {
-                    log('Dados recebidos do Firebase');
-
-                    try {
-                        const dados = snapshot.val();
-
-                        if (dados) {
-                            // Converter objeto em array
-                            produtos = Object.keys(dados).map(function(key) {
-                                return { id: key, ...dados[key] };
-                            });
-
-                            log('Convertidos ' + produtos.length + ' produtos do Firebase');
-
-                            // Salvar no localStorage
-                            localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-                            log('Backup local atualizado');
-
-                            // Atualizar interface
-                            atualizarLista();
-                        } else {
-                            log('Nenhum dado encontrado no Firebase (nó vazio)');
-                            // Não limpar produtos se já temos do localStorage
-                            if (produtos.length === 0) {
-                                atualizarLista();
-                            }
-                        }
-                    } catch (e) {
-                        log('ERRO ao processar dados: ' + e.message);
+                    const dados = snapshot.val();
+                    if (dados) {
+                        produtos = Object.keys(dados).map(key => ({ id: key, ...dados[key] }));
+                        localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+                        atualizarLista(); // CHAMA A FUNÇÃO
                     }
                 },
                 function(error) {
-                    log('ERRO do Firebase: ' + error.code + ' - ' + error.message);
-                    console.error('Firebase error:', error);
-
-                    // Em caso de erro, manter dados do localStorage
-                    if (produtos.length === 0 && backup) {
-                        try {
-                            produtos = JSON.parse(backup);
-                            atualizarLista();
-                            log('Usando backup local devido a erro');
-                        } catch (e) {}
-                    }
+                    console.error('Erro:', error);
                 }
             );
         }
@@ -1518,3 +1474,4 @@
     </script>
 </body>
 </html>
+
