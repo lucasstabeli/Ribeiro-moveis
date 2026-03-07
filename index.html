@@ -360,7 +360,6 @@
             margin-bottom: 12px;
         }
 
-        /* CORREÇÃO: Bolinhas de cor com borda preta fina */
         .produto-colors {
             display: flex;
             gap: 6px;
@@ -371,7 +370,6 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            /* Borda preta fina sempre visível */
             border: 1px solid #333;
             box-shadow: 0 0 0 1px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.3);
             cursor: pointer;
@@ -795,7 +793,6 @@
             font-size: 0.8rem;
         }
 
-        /* CORREÇÃO: Cores no modal também com borda */
         .color-options {
             display: flex;
             gap: 8px;
@@ -971,7 +968,6 @@
             .hero-logo-wrap { width: 180px; }
         }
     </style>
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -1297,268 +1293,6 @@
 
     <a href="admin.html" class="admin-link-sutil">adm</a>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBxlhL9IMFvUKAGxYikutb1BU2WGnC_t5E",
-            authDomain: "ribeiro-moveis.firebaseapp.com",
-            databaseURL: "https://ribeiro-moveis-default-rtdb.firebaseio.com",
-            projectId: "ribeiro-moveis",
-            storageBucket: "ribeiro-moveis.firebasestorage.app",
-            messagingSenderId: "215506296403",
-            appId: "1:215506296403:web:b298fccdfd65d20001b0a6"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let produtos = [];
-        let currentImageIndex = 0;
-        let currentProduto = null;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            carregarProdutosFirebase();
-        });
-
-        function carregarProdutosFirebase() {
-            const loading = document.getElementById('loadingOverlay');
-            loading.classList.add('active');
-
-            const backup = localStorage.getItem('produtos_backup');
-            if (backup) {
-                try {
-                    produtos = JSON.parse(backup);
-                    renderProdutos('todos');
-                    loading.classList.remove('active');
-                } catch (e) {}
-            }
-
-            db.ref('produtos').on('value', function(snapshot) {
-                const dados = snapshot.val();
-
-                if (dados) {
-                    produtos = Object.keys(dados).map(function(key) {
-                        return { id: key, ...dados[key] };
-                    });
-
-                    produtos.sort(function(a, b) {
-                        return (a.ordem || 0) - (b.ordem || 0);
-                    });
-
-                    localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-                    renderProdutos('todos');
-                } else {
-                    produtos = [];
-                    renderProdutos('todos');
-                }
-
-                loading.classList.remove('active');
-            }, function(error) {
-                loading.classList.remove('active');
-            });
-        }
-
-        function renderProdutos(filtro, subcategoria) {
-            const grid = document.getElementById('produtosGrid');
-            grid.innerHTML = '';
-
-            if (produtos.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">Nenhum produto cadastrado.</div>';
-                return;
-            }
-
-            let filtrados = produtos;
-
-            if (filtro !== 'todos') {
-                filtrados = produtos.filter(p => p.ambiente === filtro);
-                if (subcategoria) {
-                    filtrados = filtrados.filter(p => p.subcategoria === subcategoria);
-                }
-            }
-
-            if (filtrados.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">Nenhum produto nesta categoria.</div>';
-                return;
-            }
-
-            filtrados.forEach(produto => {
-                const card = document.createElement('div');
-                card.className = 'produto-card';
-                card.onclick = () => openModal(produto);
-
-                const cores = produto.cores || [];
-                const coresHtml = cores.slice(0, 4).map(cor => 
-                    `<span class="color-dot" style="background-color: ${getColorCode(cor)}" title="${cor}"></span>`
-                ).join('');
-
-                const imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : '';
-                const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f5f5f5' width='400' height='300'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle'%3ESem Imagem%3C/text%3E%3C/svg%3E";
-
-                card.innerHTML = `
-                    <div class="produto-image">
-                        <img src="${imgSrc}" alt="${produto.nome || 'Produto'}" onerror="this.src='${svgPlaceholder}'">
-                    </div>
-                    <div class="produto-info">
-                        <h3>${produto.nome || 'Produto'}</h3>
-                        <p class="produto-price">R$ ${(produto.preco || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                        <div class="produto-colors">${coresHtml}</div>
-                        <button class="produto-btn">Ver Detalhes <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></button>
-                    </div>
-                `;
-
-                grid.appendChild(card);
-            });
-
-            document.querySelectorAll('.ambiente-btn').forEach(btn => {
-                btn.classList.remove('active');
-                const onclick = btn.getAttribute('onclick');
-                if (filtro === 'todos' && onclick && onclick.includes("'todos'")) {
-                    btn.classList.add('active');
-                } else if (filtro !== 'todos' && onclick && onclick.includes("'" + filtro + "'")) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-
-        function filtrarProdutos(ambiente) {
-            renderProdutos(ambiente);
-        }
-
-        function filtrarSubcategoria(ambiente, subcategoria) {
-            renderProdutos(ambiente, subcategoria);
-            fecharTodosDropdowns();
-        }
-
-        function toggleDropdownMobile(element) {
-            if (window.innerWidth <= 768) {
-                document.querySelectorAll('.ambiente-item').forEach(item => {
-                    if (item !== element) {
-                        item.classList.remove('active');
-                    }
-                });
-                element.classList.toggle('active');
-            }
-        }
-
-        function fecharTodosDropdowns() {
-            document.querySelectorAll('.ambiente-item').forEach(item => {
-                item.classList.remove('active');
-            });
-        }
-
-        function openModal(produto) {
-            currentProduto = produto;
-            currentImageIndex = 0;
-
-            document.getElementById('modalTitle').textContent = produto.nome || 'Produto';
-            document.getElementById('modalPrice').textContent = 'R$ ' + (produto.preco || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
-
-            const dims = (produto.dimensoes || '- x - x -').split(' x ');
-            document.getElementById('dimLargura').textContent = dims[0] || '-';
-            document.getElementById('dimAltura').textContent = dims[1] || '-';
-            document.getElementById('dimProfundidade').textContent = dims[2] || '-';
-
-            const disp = document.getElementById('modalDisponibilidade');
-            if (produto.disponibilidade === 'pronta-entrega') {
-                disp.innerHTML = '<div class="disponibilidade-modal"><i class="fas fa-check-circle"></i> PRONTA ENTREGA</div>';
-            } else if (produto.disponibilidade === 'sob-encomenda') {
-                disp.innerHTML = '<div class="disponibilidade-modal"><i class="fas fa-clock"></i> SOB ENCOMENDA</div>';
-            } else {
-                disp.innerHTML = '';
-            }
-
-            const cores = produto.cores || [];
-            document.getElementById('colorOptions').innerHTML = cores.map((cor, idx) => 
-                `<span class="color-option ${idx === 0 ? 'active' : ''}" onclick="selectColor(this)">${cor}</span>`
-            ).join('');
-
-            updateGallery();
-            document.getElementById('produtoModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function updateGallery() {
-            if (!currentProduto) return;
-            const imgs = currentProduto.imagens || [];
-            document.getElementById('modalMainImage').src = imgs[currentImageIndex] || '';
-            document.getElementById('galleryThumbs').innerHTML = imgs.map((img, idx) => 
-                `<img src="${img}" class="${idx === currentImageIndex ? 'active' : ''}" onclick="setImage(${idx})">`
-            ).join('');
-        }
-
-        function changeImage(dir) {
-            const imgs = currentProduto.imagens || [];
-            currentImageIndex = (currentImageIndex + dir + imgs.length) % imgs.length;
-            updateGallery();
-        }
-
-        function setImage(idx) {
-            currentImageIndex = idx;
-            updateGallery();
-        }
-
-        function closeModal() {
-            document.getElementById('produtoModal').classList.remove('active');
-            document.body.style.overflow = '';
-            currentProduto = null;
-        }
-
-        function selectColor(el) {
-            document.querySelectorAll('.color-option').forEach(e => e.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        function enviarWhatsApp() {
-            if (!currentProduto) return;
-
-            const cor = document.querySelector('.color-option.active')?.textContent || (currentProduto.cores || [])[0] || '';
-            const disp = currentProduto.disponibilidade === 'pronta-entrega' ? '*Pronta Entrega* ✅' : '*Sob Encomenda* ⏰';
-            const cod = currentProduto.codigo || 'N/A';
-
-            const mensagem = `*Ribeiro Móveis e Colchões* 👑\n\nOlá! Tenho interesse no produto:\n\n📦 *${currentProduto.nome}*\n🎨 Cor: ${cor}\n${disp}\n🏷️ Código: ${cod}\n\nPor favor, me envie mais informações`;
-
-            const mensagemCodificada = encodeURIComponent(mensagem);
-            const numero = '5512991652100';
-
-            const linkWhatsApp = `https://wa.me/${numero}?text=${mensagemCodificada}`;
-
-            window.open(linkWhatsApp, '_blank');
-        }
-
-        function getColorCode(cor) {
-            const cores = {
-                'marrom': '#8B4513', 'bege': '#F5F5DC', 'cinza': '#808080',
-                'branco': '#FFFFFF', 'preto': '#000000', 'madeira': '#DEB887',
-                'carvalho': '#D2691E', 'nogueira': '#654321', 'vinho': '#722F37',
-                'azul': '#0000FF', 'vermelho': '#FF0000', 'verde': '#008000',
-                'amarelo': '#FFFF00', 'rosa': '#FFC0CB', 'roxo': '#800080',
-                'laranja': '#FFA500', 'off white': '#F5F5F5', 'offwhite': '#F5F5F5'
-            };
-            return cores[(cor || '').toLowerCase().trim()] || '#ddd';
-        }
-
-        function toggleMenu() {
-            document.getElementById('mainNav').classList.toggle('active');
-        }
-
-        function closeMenu() {
-            document.getElementById('mainNav').classList.remove('active');
-        }
-
-        document.getElementById('produtoModal').addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.ambiente-item')) {
-                fecharTodosDropdowns();
-            }
-        });
-
-        document.getElementById('produtoModal').addEventListener('touchmove', function(e) {
-            if (e.target === this) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
