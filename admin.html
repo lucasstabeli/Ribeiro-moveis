@@ -1018,7 +1018,8 @@
 
         // ============================================
         // CARREGAR PRODUTOS - VERSÃO FINAL CORRIGIDA
-        // ============================================
+       // SUBSTITUA a função carregarProdutosFirebase no admin.html por esta:
+
         function carregarProdutosFirebase() {
             log('=== CARREGANDO PRODUTOS ===');
 
@@ -1039,35 +1040,18 @@
                 `;
             }
 
-            // Remover listener anterior se existir
+            // Remover listener anterior
             if (firebaseListener) {
                 firebaseListener.off();
                 log('Listener anterior removido');
             }
 
-            // Criar novo listener com timeout de segurança
-            let timeoutId = setTimeout(function() {
-                log('⏱️ Timeout - carregamento demorando muito', 'aviso');
-                // Tentar usar backup
-                const backup = localStorage.getItem('produtos_backup');
-                if (backup) {
-                    try {
-                        produtos = JSON.parse(backup);
-                        log('📦 Usando backup devido ao timeout: ' + produtos.length + ' produtos');
-                        atualizarLista();
-                    } catch (e) {
-                        mostrarErroLista('Timeout na conexão. Verifique sua internet.');
-                    }
-                }
-            }, 10000); // 10 segundos timeout
-
+            // Criar novo listener
             try {
                 firebaseListener = db.ref('produtos');
                 
                 firebaseListener.on('value', 
                     function(snapshot) {
-                        clearTimeout(timeoutId); // Cancelar timeout
-                        
                         const dados = snapshot.val();
                         log('📥 Dados brutos recebidos do Firebase');
 
@@ -1075,17 +1059,9 @@
                             const keys = Object.keys(dados);
                             log('📊 Total de produtos no Firebase: ' + keys.length);
 
-                            // Converter objeto em array com tratamento completo
+                            // Converter objeto em array
                             produtos = keys.map(function(key) {
                                 const p = dados[key];
-                                
-                                // CORREÇÃO CRÍTICA: Tratar ordem de várias formas
-                                let ordemValor = 999999;
-                                if (p.ordem !== undefined && p.ordem !== null) {
-                                    ordemValor = parseInt(p.ordem);
-                                    if (isNaN(ordemValor)) ordemValor = 999999;
-                                }
-
                                 return { 
                                     id: key, 
                                     nome: p.nome || 'Sem nome',
@@ -1097,25 +1073,24 @@
                                     cores: Array.isArray(p.cores) ? p.cores : [],
                                     dimensoes: p.dimensoes || '',
                                     codigo: p.codigo || '',
-                                    ordem: ordemValor,
+                                    ordem: (p.ordem !== undefined && p.ordem !== null) ? parseInt(p.ordem) : 999999,
                                     dataAtualizacao: p.dataAtualizacao || Date.now()
                                 };
                             });
 
                             log('✅ Produtos processados: ' + produtos.length);
-
+                            
                             // Mostrar últimos produtos no log
                             if (produtos.length > 0) {
                                 const ultimos = produtos.slice(-3);
                                 ultimos.forEach(u => {
-                                    log('  → #' + produtos.indexOf(u) + ': ' + u.nome + ' (ordem: ' + u.ordem + ', id: ' + u.id.substring(0,8) + '...)');
+                                    log('  → ' + u.nome + ' (ordem: ' + u.ordem + ')');
                                 });
                             }
 
-                            // Salvar backup
-                            localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-                            log('💾 Backup salvo no localStorage');
-
+                            // REMOVIDO: Não salvar mais no localStorage para evitar QuotaExceededError
+                            // localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+                            
                             // Atualizar interface
                             atualizarLista();
                             
@@ -1126,16 +1101,12 @@
                         }
                     },
                     function(error) {
-                        clearTimeout(timeoutId);
                         log('❌ ERRO Firebase: ' + error.message, 'erro');
-                        log('Código: ' + error.code, 'erro');
-                        
                         mostrarErroLista('Erro ao carregar: ' + error.message);
                     }
                 );
 
             } catch (e) {
-                clearTimeout(timeoutId);
                 log('❌ ERRO ao criar listener: ' + e.message, 'erro');
                 mostrarErroLista('Erro interno: ' + e.message);
             }
