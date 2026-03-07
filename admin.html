@@ -236,7 +236,6 @@
             max-height: 85vh;
         }
 
-        /* CORREÇÃO: Lista com altura garantida e scroll */
         .lista-box {
             min-height: 400px;
             max-height: 85vh;
@@ -262,7 +261,6 @@
             scrollbar-color: var(--dourado) #f0f0f0;
         }
 
-        /* Scrollbar estilizada para Chrome */
         .box-content::-webkit-scrollbar {
             width: 8px;
         }
@@ -629,6 +627,28 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
+        /* DEBUG CONSOLE */
+        .debug-console {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            max-height: 200px;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 0.7rem;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10000;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .debug-console.active {
+            display: block;
+        }
+
         @media (max-width: 900px) {
             .cadastro-panel {
                 grid-template-columns: 1fr;
@@ -675,6 +695,7 @@
             <input type="password" id="senhaInput" placeholder="Digite a senha..." onkeypress="if(event.key==='Enter')fazerLogin()">
             <button onclick="fazerLogin()">Entrar</button>
             <p id="erroLogin" class="erro-msg">Senha incorreta!</p>
+            <button onclick="toggleDebug()" style="margin-top: 10px; font-size: 0.7rem; background: transparent; border: none; color: #999; cursor: pointer;">Mostrar Debug</button>
         </div>
     </div>
 
@@ -683,7 +704,7 @@
         <div class="admin-header-compact">
             <div>
                 <h1>👑 Gerenciamento</h1>
-                <p>Adicione, edite ou remova produtos</p>
+                <p id="statusConexao">Conectando...</p>
             </div>
             <div class="header-actions">
                 <input type="text" id="buscaCodigoInput" class="busca-codigo-input" placeholder="Código..." maxlength="6">
@@ -812,7 +833,10 @@
         </div>
     </div>
 
+    <div id="debugConsole" class="debug-console"></div>
+
     <script>
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBxlhL9IMFvUKAGxYikutb1BU2WGnC_t5E",
             authDomain: "ribeiro-moveis.firebaseapp.com",
@@ -839,6 +863,7 @@
         let produtoBuscadoId = null;
         let db = null;
         let storage = null;
+        let firebaseListener = null;
 
         let draggedItem = null;
         let draggedIndex = null;
@@ -846,15 +871,55 @@
         let touchCurrentY = 0;
         let placeholder = null;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-            storage = firebase.storage();
+        // DEBUG
+        function log(msg) {
+            console.log('[Ribeiro Admin]', msg);
+            const debugDiv = document.getElementById('debugConsole');
+            if (debugDiv) {
+                debugDiv.innerHTML += '<div>' + new Date().toLocaleTimeString() + ' - ' + msg + '</div>';
+                debugDiv.scrollTop = debugDiv.scrollHeight;
+            }
+        }
 
-            if (localStorage.getItem('logado') === 'true') {
-                mostrarPainel();
+        function toggleDebug() {
+            document.getElementById('debugConsole').classList.toggle('active');
+        }
+
+        // INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Iniciando aplicação...');
+
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                storage = firebase.storage();
+                log('Firebase inicializado com sucesso');
+
+                // Verificar conexão
+                verificarConexao();
+
+                if (localStorage.getItem('logado') === 'true') {
+                    mostrarPainel();
+                }
+            } catch (e) {
+                log('ERRO ao inicializar Firebase: ' + e.message);
+                alert('Erro ao conectar com o banco de dados. Verifique sua conexão.');
             }
         });
+
+        function verificarConexao() {
+            const connectedRef = db.ref('.info/connected');
+            connectedRef.on('value', function(snap) {
+                const status = document.getElementById('statusConexao');
+                if (snap.val() === true) {
+                    log('Conectado ao Firebase');
+                    if (status) status.textContent = '🟢 Online';
+                } else {
+                    log('Desconectado do Firebase');
+                    if (status) status.textContent = '🔴 Offline';
+                }
+            });
+        }
 
         function fazerLogin() {
             const senha = document.getElementById('senhaInput').value;
@@ -878,25 +943,83 @@
             carregarProdutosFirebase();
         }
 
+        // CORREÇÃO PRINCIPAL: Carregar produtos com tratamento de erro completo
         function carregarProdutosFirebase() {
+            log('Carregando produtos...');
+
+            // 1. PRIMEIRO: Tentar carregar do localStorage (fallback imediato)
             const backup = localStorage.getItem('produtos_backup');
             if (backup) {
                 try {
                     produtos = JSON.parse(backup);
+                    log('Carregado ' + produtos.length + ' produtos do backup local');
                     atualizarLista();
-                } catch (e) {}
+                } catch (e) {
+                    log('ERRO ao ler backup local: ' + e.message);
+                    produtos = [];
+                }
+            } else {
+                log('Nenhum backup local encontrado');
+                produtos = [];
+                atualizarLista();
             }
 
-            db.ref('produtos').on('value', function(snapshot) {
-                const dados = snapshot.val();
-                if (dados) {
-                    produtos = Object.keys(dados).map(function(key) {
-                        return { id: key, ...dados[key] };
-                    });
-                    localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-                    atualizarLista();
+            // 2. DEPOIS: Configurar listener do Firebase
+            if (firebaseListener) {
+                firebaseListener.off(); // Remove listener antigo se existir
+                log('Listener anterior removido');
+            }
+
+            log('Configurando listener do Firebase...');
+
+            firebaseListener = db.ref('produtos');
+
+            firebaseListener.on('value', 
+                function(snapshot) {
+                    log('Dados recebidos do Firebase');
+
+                    try {
+                        const dados = snapshot.val();
+
+                        if (dados) {
+                            // Converter objeto em array
+                            produtos = Object.keys(dados).map(function(key) {
+                                return { id: key, ...dados[key] };
+                            });
+
+                            log('Convertidos ' + produtos.length + ' produtos do Firebase');
+
+                            // Salvar no localStorage
+                            localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+                            log('Backup local atualizado');
+
+                            // Atualizar interface
+                            atualizarLista();
+                        } else {
+                            log('Nenhum dado encontrado no Firebase (nó vazio)');
+                            // Não limpar produtos se já temos do localStorage
+                            if (produtos.length === 0) {
+                                atualizarLista();
+                            }
+                        }
+                    } catch (e) {
+                        log('ERRO ao processar dados: ' + e.message);
+                    }
+                },
+                function(error) {
+                    log('ERRO do Firebase: ' + error.code + ' - ' + error.message);
+                    console.error('Firebase error:', error);
+
+                    // Em caso de erro, manter dados do localStorage
+                    if (produtos.length === 0 && backup) {
+                        try {
+                            produtos = JSON.parse(backup);
+                            atualizarLista();
+                            log('Usando backup local devido a erro');
+                        } catch (e) {}
+                    }
                 }
-            });
+            );
         }
 
         function mostrarAba(aba) {
@@ -1072,6 +1195,7 @@
             }
 
             document.getElementById('loadingOverlay').classList.add('active');
+            log('Salvando produto...');
 
             const id = document.getElementById('produtoId').value;
             let imagens = imagensTemp.length > 0 ? [...imagensTemp] : [];
@@ -1106,18 +1230,16 @@
                         produto.ordem = produtoAntigo.ordem;
                     }
                     await db.ref('produtos/' + id).update(produto);
+                    log('Produto atualizado: ' + codigo);
                 } else {
                     const novoId = db.ref('produtos').push().key;
                     produto.id = novoId;
                     produto.ordem = produtos.length;
                     await db.ref('produtos/' + novoId).set(produto);
+                    log('Novo produto criado: ' + codigo);
                 }
 
-                // CORREÇÃO: Forçar atualização imediata
-                await carregarProdutosFirebase();
-                atualizarLista();
-
-                // Scroll para o topo para ver o novo produto
+                // Forçar atualização imediata
                 setTimeout(() => {
                     const lista = document.getElementById('listaProdutos');
                     if (lista) lista.scrollTop = 0;
@@ -1126,6 +1248,7 @@
                 limparFormulario();
                 alert('✅ Produto salvo com sucesso! Código: ' + codigo);
             } catch (error) {
+                log('ERRO ao salvar: ' + error.message);
                 console.error('Erro ao salvar:', error);
                 alert('❌ Erro ao salvar. Tente novamente.');
             } finally {
@@ -1133,7 +1256,6 @@
             }
         }
 
-        // CORREÇÃO: Função atualizarLista melhorada
         function atualizarLista() {
             const container = document.getElementById('listaProdutos');
             const contador = document.getElementById('contadorProdutos');
@@ -1144,7 +1266,6 @@
                 return;
             }
 
-            // Ordenar por ordem
             produtos.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
             const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%23ddd' width='50' height='50'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ESem%3C/text%3E%3C/svg%3E";
@@ -1210,11 +1331,14 @@
             if (!confirm('Tem certeza que deseja excluir este produto?')) return;
 
             document.getElementById('loadingOverlay').classList.add('active');
+            log('Excluindo produto: ' + id);
 
             try {
                 await db.ref('produtos/' + id).remove();
+                log('Produto excluído com sucesso');
                 alert('✅ Produto excluído com sucesso!');
             } catch (error) {
+                log('ERRO ao excluir: ' + error.message);
                 console.error('Erro ao excluir:', error);
                 alert('❌ Erro ao excluir. Tente novamente.');
             } finally {
@@ -1353,6 +1477,7 @@
             if (items.length === 0) return;
 
             document.getElementById('loadingOverlay').classList.add('active');
+            log('Salvando ordem...');
 
             try {
                 const atualizacoes = {};
@@ -1369,8 +1494,10 @@
                 });
 
                 localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+                log('Ordem salva com sucesso');
                 alert('✅ Ordem salva com sucesso!');
             } catch (error) {
+                log('ERRO ao salvar ordem: ' + error.message);
                 console.error('Erro ao salvar ordem:', error);
                 alert('❌ Erro ao salvar ordem: ' + error.message);
             } finally {
@@ -1380,6 +1507,13 @@
 
         document.getElementById('modalBusca').addEventListener('click', function(e) {
             if (e.target === this) fecharBusca();
+        });
+
+        // Limpar listener ao fechar a página
+        window.addEventListener('beforeunload', function() {
+            if (firebaseListener) {
+                firebaseListener.off();
+            }
         });
     </script>
 </body>
