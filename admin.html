@@ -631,21 +631,38 @@
             position: fixed;
             bottom: 10px;
             right: 10px;
-            width: 300px;
-            max-height: 200px;
-            background: rgba(0,0,0,0.9);
+            width: 350px;
+            max-height: 250px;
+            background: rgba(0,0,0,0.95);
             color: #0f0;
             font-family: monospace;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             padding: 10px;
             border-radius: 5px;
-            z-index: 10000;
+            z-index: 10001;
             overflow-y: auto;
             display: none;
+            border: 2px solid var(--dourado);
         }
 
         .debug-console.active {
             display: block;
+        }
+
+        .debug-console div {
+            margin-bottom: 3px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 2px;
+        }
+
+        .erro-box {
+            background: #fee;
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+            text-align: center;
         }
 
         @media (max-width: 900px) {
@@ -667,7 +684,6 @@
             .form-row-compact { grid-template-columns: 1fr; }
         }
     </style>
-<base target="_blank">
 </head>
 <body>
 
@@ -693,7 +709,7 @@
             <input type="password" id="senhaInput" placeholder="Digite a senha..." onkeypress="if(event.key==='Enter')fazerLogin()">
             <button onclick="fazerLogin()">Entrar</button>
             <p id="erroLogin" class="erro-msg">Senha incorreta!</p>
-            <button onclick="toggleDebug()" style="margin-top: 10px; font-size: 0.7rem; background: transparent; border: none; color: #999; cursor: pointer;">Mostrar Debug</button>
+            <button onclick="toggleDebug()" style="margin-top: 10px; font-size: 0.7rem; background: transparent; border: none; color: #999; cursor: pointer;">Mostrar Debug Console</button>
         </div>
     </div>
 
@@ -839,7 +855,6 @@
     <div id="debugConsole" class="debug-console"></div>
 
     <script>
-
         // ============================================
         // CONFIGURAÇÃO FIREBASE
         // ============================================
@@ -870,6 +885,7 @@
         let db = null;
         let storage = null;
         let firebaseListener = null;
+        let isFirebaseReady = false;
 
         let draggedItem = null;
         let draggedIndex = null;
@@ -877,173 +893,279 @@
         let touchCurrentY = 0;
 
         // ============================================
-        // DEBUG
+        // DEBUG - Console visível
         // ============================================
-        function log(msg) {
-            console.log('[Ribeiro Admin]', msg);
+        function log(msg, tipo = 'info') {
+            const hora = new Date().toLocaleTimeString();
+            const prefixo = '[Ribeiro Admin]';
+            const mensagemCompleta = `${prefixo} ${msg}`;
+            
+            // Console do navegador
+            if (tipo === 'erro') {
+                console.error(mensagemCompleta);
+            } else if (tipo === 'aviso') {
+                console.warn(mensagemCompleta);
+            } else {
+                console.log(mensagemCompleta);
+            }
+            
+            // Debug visual
             const debugDiv = document.getElementById('debugConsole');
             if (debugDiv) {
-                debugDiv.innerHTML += '<div>' + new Date().toLocaleTimeString() + ' - ' + msg + '</div>';
+                const cor = tipo === 'erro' ? '#ff4444' : (tipo === 'aviso' ? '#ffaa00' : '#0f0');
+                debugDiv.innerHTML += `<div style="color: ${cor}">[${hora}] ${msg}</div>`;
                 debugDiv.scrollTop = debugDiv.scrollHeight;
             }
         }
 
         function toggleDebug() {
-            document.getElementById('debugConsole').classList.toggle('active');
+            const debugDiv = document.getElementById('debugConsole');
+            debugDiv.classList.toggle('active');
+            log('Debug console ' + (debugDiv.classList.contains('active') ? 'ativado' : 'desativado'));
         }
 
         // ============================================
-        // INICIALIZAÇÃO
+        // INICIALIZAÇÃO CORRIGIDA
         // ============================================
         document.addEventListener('DOMContentLoaded', function() {
-            log('Iniciando aplicação...');
+            log('🚀 Iniciando aplicação admin v3.0...');
 
             try {
+                // Inicializar Firebase
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
                 storage = firebase.storage();
-                log('Firebase inicializado com sucesso');
+                isFirebaseReady = true;
+                
+                log('✅ Firebase inicializado com sucesso');
+                log('📡 Database URL: ' + firebaseConfig.databaseURL);
 
+                // Verificar conexão
                 verificarConexao();
 
+                // Se já estiver logado, mostrar painel
                 if (localStorage.getItem('logado') === 'true') {
+                    log('🔓 Usuário já logado, mostrando painel...');
                     mostrarPainel();
+                } else {
+                    log('🔒 Aguardando login...');
                 }
+
             } catch (e) {
-                log('ERRO ao inicializar Firebase: ' + e.message);
-                alert('Erro ao conectar com o banco de dados. Verifique sua conexão.');
+                log('❌ ERRO CRÍTICO ao inicializar Firebase: ' + e.message, 'erro');
+                alert('Erro ao conectar com o banco de dados. Verifique sua conexão.\n\nErro: ' + e.message);
             }
         });
 
         function verificarConexao() {
+            if (!db) return;
+            
             const connectedRef = db.ref('.info/connected');
             connectedRef.on('value', function(snap) {
                 const status = document.getElementById('statusConexao');
                 if (snap.val() === true) {
-                    log('Conectado ao Firebase');
-                    if (status) status.textContent = '🟢 Online';
+                    log('🟢 Conectado ao Firebase');
+                    if (status) {
+                        status.textContent = '🟢 Online';
+                        status.style.color = '#25D366';
+                    }
                 } else {
-                    log('Desconectado do Firebase');
-                    if (status) status.textContent = '🔴 Offline';
+                    log('🔴 Desconectado do Firebase', 'aviso');
+                    if (status) {
+                        status.textContent = '🔴 Offline';
+                        status.style.color = '#dc3545';
+                    }
                 }
+            }, function(erro) {
+                log('❌ Erro na verificação de conexão: ' + erro.message, 'erro');
             });
         }
 
         function fazerLogin() {
             const senha = document.getElementById('senhaInput').value;
+            log('Tentando login...');
+            
             if (senha === SENHA_ADMIN) {
                 localStorage.setItem('logado', 'true');
+                log('✅ Login bem-sucedido');
                 mostrarPainel();
             } else {
+                log('❌ Senha incorreta', 'erro');
                 document.getElementById('erroLogin').style.display = 'block';
                 setTimeout(() => document.getElementById('erroLogin').style.display = 'none', 3000);
             }
         }
 
         function fazerLogout() {
+            log('Fazendo logout...');
             localStorage.removeItem('logado');
+            if (firebaseListener) {
+                firebaseListener.off();
+                log('Listener removido');
+            }
             location.reload();
         }
 
         function mostrarPainel() {
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('painelAdmin').style.display = 'flex';
-            carregarProdutosFirebase();
+            
+            // Pequeno delay para garantir que o DOM está pronto
+            setTimeout(function() {
+                carregarProdutosFirebase();
+            }, 100);
         }
 
         // ============================================
-        // CORREÇÃO PRINCIPAL: Carregar produtos
+        // CARREGAR PRODUTOS - VERSÃO FINAL CORRIGIDA
         // ============================================
-            // ============================================
-        // ADMIN - CORREÇÃO COMPLETA
-        // ============================================
-
-        // SUBSTITUA a função carregarProdutosFirebase no admin.html por esta:
-
         function carregarProdutosFirebase() {
-            log('=== CARREGANDO PRODUTOS (VERSÃO CORRIGIDA) ===');
+            log('=== CARREGANDO PRODUTOS ===');
+
+            if (!db) {
+                log('❌ Database não inicializado!', 'erro');
+                mostrarErroLista('Database não inicializado. Recarregue a página.');
+                return;
+            }
 
             // Mostrar loading
             const lista = document.getElementById('listaProdutos');
             if (lista) {
-                lista.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--dourado);"></i><p style="margin-top: 10px;">Carregando...</p></div>';
+                lista.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--dourado);"></i>
+                        <p style="margin-top: 10px;">Carregando produtos...</p>
+                    </div>
+                `;
             }
 
-            // Remover listener anterior
+            // Remover listener anterior se existir
             if (firebaseListener) {
                 firebaseListener.off();
                 log('Listener anterior removido');
             }
 
-            // Criar novo listener
-            firebaseListener = db.ref('produtos');
-            
-            firebaseListener.on('value', 
-                function(snapshot) {
-                    const dados = snapshot.val();
-                    log('📥 Dados recebidos do Firebase: ' + (dados ? Object.keys(dados).length : 0) + ' itens');
-
-                    if (dados) {
-                        // Converter objeto em array COM TRATAMENTO DE ORDEM
-                        produtos = Object.keys(dados).map(function(key) {
-                            const p = dados[key];
-                            return { 
-                                id: key, 
-                                ...p,
-                                // CORREÇÃO CRÍTICA: Tratar ordem undefined/null
-                                ordem: (p.ordem !== undefined && p.ordem !== null) ? parseInt(p.ordem) : 999999
-                            };
-                        });
-
-                        log('✅ Produtos processados: ' + produtos.length);
-
-                        // Log dos últimos 3 para verificação
-                        if (produtos.length > 0) {
-                            const ultimos = produtos.slice(-3);
-                            ultimos.forEach(u => log('  → ' + u.nome + ' (ordem: ' + u.ordem + ')'));
-                        }
-
-                        // Salvar backup
-                        localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-
-                        // Atualizar interface
+            // Criar novo listener com timeout de segurança
+            let timeoutId = setTimeout(function() {
+                log('⏱️ Timeout - carregamento demorando muito', 'aviso');
+                // Tentar usar backup
+                const backup = localStorage.getItem('produtos_backup');
+                if (backup) {
+                    try {
+                        produtos = JSON.parse(backup);
+                        log('📦 Usando backup devido ao timeout: ' + produtos.length + ' produtos');
                         atualizarLista();
-                        
-                    } else {
-                        log('⚠️ Nenhum dado encontrado');
-                        produtos = [];
-                        atualizarLista();
-                    }
-                },
-                function(error) {
-                    log('❌ ERRO Firebase: ' + error.message);
-                    console.error('Erro:', error);
-
-                    // Tentar usar backup
-                    const backup = localStorage.getItem('produtos_backup');
-                    if (backup) {
-                        try {
-                            produtos = JSON.parse(backup);
-                            log('📦 Usando backup: ' + produtos.length + ' produtos');
-                            atualizarLista();
-                        } catch (e) {
-                            if (lista) {
-                                lista.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc3545;"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar. Tente recarregar.</p></div>';
-                            }
-                        }
+                    } catch (e) {
+                        mostrarErroLista('Timeout na conexão. Verifique sua internet.');
                     }
                 }
-            );
+            }, 10000); // 10 segundos timeout
+
+            try {
+                firebaseListener = db.ref('produtos');
+                
+                firebaseListener.on('value', 
+                    function(snapshot) {
+                        clearTimeout(timeoutId); // Cancelar timeout
+                        
+                        const dados = snapshot.val();
+                        log('📥 Dados brutos recebidos do Firebase');
+
+                        if (dados) {
+                            const keys = Object.keys(dados);
+                            log('📊 Total de produtos no Firebase: ' + keys.length);
+
+                            // Converter objeto em array com tratamento completo
+                            produtos = keys.map(function(key) {
+                                const p = dados[key];
+                                
+                                // CORREÇÃO CRÍTICA: Tratar ordem de várias formas
+                                let ordemValor = 999999;
+                                if (p.ordem !== undefined && p.ordem !== null) {
+                                    ordemValor = parseInt(p.ordem);
+                                    if (isNaN(ordemValor)) ordemValor = 999999;
+                                }
+
+                                return { 
+                                    id: key, 
+                                    nome: p.nome || 'Sem nome',
+                                    preco: parseFloat(p.preco) || 0,
+                                    ambiente: p.ambiente || '',
+                                    subcategoria: p.subcategoria || '',
+                                    disponibilidade: p.disponibilidade || '',
+                                    imagens: Array.isArray(p.imagens) ? p.imagens : [],
+                                    cores: Array.isArray(p.cores) ? p.cores : [],
+                                    dimensoes: p.dimensoes || '',
+                                    codigo: p.codigo || '',
+                                    ordem: ordemValor,
+                                    dataAtualizacao: p.dataAtualizacao || Date.now()
+                                };
+                            });
+
+                            log('✅ Produtos processados: ' + produtos.length);
+
+                            // Mostrar últimos produtos no log
+                            if (produtos.length > 0) {
+                                const ultimos = produtos.slice(-3);
+                                ultimos.forEach(u => {
+                                    log('  → #' + produtos.indexOf(u) + ': ' + u.nome + ' (ordem: ' + u.ordem + ', id: ' + u.id.substring(0,8) + '...)');
+                                });
+                            }
+
+                            // Salvar backup
+                            localStorage.setItem('produtos_backup', JSON.stringify(produtos));
+                            log('💾 Backup salvo no localStorage');
+
+                            // Atualizar interface
+                            atualizarLista();
+                            
+                        } else {
+                            log('⚠️ Nenhum dado encontrado no Firebase');
+                            produtos = [];
+                            atualizarLista();
+                        }
+                    },
+                    function(error) {
+                        clearTimeout(timeoutId);
+                        log('❌ ERRO Firebase: ' + error.message, 'erro');
+                        log('Código: ' + error.code, 'erro');
+                        
+                        mostrarErroLista('Erro ao carregar: ' + error.message);
+                    }
+                );
+
+            } catch (e) {
+                clearTimeout(timeoutId);
+                log('❌ ERRO ao criar listener: ' + e.message, 'erro');
+                mostrarErroLista('Erro interno: ' + e.message);
+            }
         }
 
-        // SUBSTITUA a função atualizarLista por esta:
+        function mostrarErroLista(mensagem) {
+            const lista = document.getElementById('listaProdutos');
+            if (lista) {
+                lista.innerHTML = `
+                    <div class="erro-box">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p><strong>Erro ao carregar produtos</strong></p>
+                        <p style="font-size: 0.85rem; margin: 10px 0;">${mensagem}</p>
+                        <button onclick="carregarProdutosFirebase()" style="padding: 8px 16px; background: var(--vinho); color: var(--dourado); border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                            <i class="fas fa-sync"></i> Tentar novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
 
+        // ============================================
+        // ATUALIZAR LISTA - VERSÃO CORRIGIDA
+        // ============================================
         function atualizarLista() {
             const container = document.getElementById('listaProdutos');
             const contador = document.getElementById('contadorProdutos');
 
             if (!container) {
-                log('❌ ERRO: Container listaProdutos não encontrado');
+                log('❌ ERRO: Container listaProdutos não encontrado', 'erro');
                 return;
             }
 
@@ -1059,25 +1181,26 @@
                     <div style="text-align: center; padding: 40px; color: #666;">
                         <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; color: var(--dourado);"></i>
                         <p style="font-size: 0.9rem;">Nenhum produto cadastrado</p>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">Adicione um produto usando o formulário ao lado</p>
                     </div>
                 `;
                 return;
             }
 
-            // CORREÇÃO: Ordenar por ordem (undefined vai pro final)
+            // Ordenar produtos (undefined/null vão pro final)
             const produtosOrdenados = [...produtos].sort((a, b) => {
-                const ordemA = (a.ordem !== undefined && a.ordem !== null) ? parseInt(a.ordem) : 999999;
-                const ordemB = (b.ordem !== undefined && b.ordem !== null) ? parseInt(b.ordem) : 999999;
-                return ordemA - ordemB;
+                return a.ordem - b.ordem;
             });
 
             const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%23ddd' width='50' height='50'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ESem%3C/text%3E%3C/svg%3E";
 
-            // Criar HTML para TODOS os produtos
-            container.innerHTML = produtosOrdenados.map((produto, index) => {
-                const imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : svgPlaceholder;
+            // Renderizar TODOS os produtos
+            let html = '';
+            produtosOrdenados.forEach((produto, index) => {
+                const imgSrc = (produto.imagens && produto.imagens.length > 0) ? produto.imagens[0] : svgPlaceholder;
+                const precoFormatado = produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-                return `
+                html += `
                     <div class="produto-item-compact" data-id="${produto.id}" data-ordem="${produto.ordem}" data-index="${index}">
                         <img src="${imgSrc}" alt="${produto.nome}" loading="lazy" onerror="this.src='${svgPlaceholder}'">
                         <div class="produto-info-compact">
@@ -1086,24 +1209,31 @@
                                 <span style="font-size: 0.75rem; color: #666;">${produto.ambiente}</span>
                             </div>
                             <h4>${produto.nome}</h4>
-                            <div class="preco">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            <div class="preco">R$ ${precoFormatado}</div>
                         </div>
                         <div class="produto-acoes-compact">
-                            <button class="btn-acao-compact btn-editar-compact" onclick="editarProduto('${produto.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-                            <button class="btn-acao-compact btn-excluir-compact" onclick="excluirProduto('${produto.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                            <button class="btn-acao-compact btn-editar-compact" onclick="editarProduto('${produto.id}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-acao-compact btn-excluir-compact" onclick="excluirProduto('${produto.id}')" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
                 `;
-            }).join('');
+            });
 
+            container.innerHTML = html;
             log('✅ Lista atualizada: ' + produtosOrdenados.length + ' itens renderizados');
         }
 
-        // SUBSTITUA a função salvarProduto por esta (garante ordem correta):
-
+        // ============================================
+        // SALVAR PRODUTO - VERSÃO CORRIGIDA
+        // ============================================
         async function salvarProduto(event) {
             event.preventDefault();
 
+            // Validações
             if (imagensTemp.length === 0 && !document.getElementById('produtoId').value) {
                 alert('Adicione pelo menos uma foto!');
                 return;
@@ -1115,19 +1245,24 @@
             }
 
             document.getElementById('loadingOverlay').classList.add('active');
-            log('💾 Salvando produto...');
+            log('💾 Iniciando salvamento...');
 
             const id = document.getElementById('produtoId').value;
             let imagens = imagensTemp.length > 0 ? [...imagensTemp] : [];
 
+            // Se está editando e não adicionou novas imagens, mantém as antigas
             if (id && imagens.length === 0) {
                 const produtoAntigo = produtos.find(p => p.id == id);
-                if (produtoAntigo) imagens = [...produtoAntigo.imagens];
+                if (produtoAntigo && produtoAntigo.imagens) {
+                    imagens = [...produtoAntigo.imagens];
+                }
             }
 
+            // Gerar ou manter código
             let codigo = document.getElementById('codigoProduto').value;
             if (!codigo) {
                 codigo = gerarCodigoProduto();
+                log('🎲 Novo código gerado: ' + codigo);
             }
 
             // CORREÇÃO: Definir ordem corretamente
@@ -1135,56 +1270,61 @@
             if (id) {
                 // Editando: mantém ordem existente
                 const produtoExistente = produtos.find(p => p.id == id);
-                ordem = produtoExistente ? (produtoExistente.ordem !== undefined ? produtoExistente.ordem : produtos.length) : produtos.length;
-                log('Editando produto existente, ordem: ' + ordem);
+                ordem = (produtoExistente && produtoExistente.ordem !== undefined) ? produtoExistente.ordem : produtos.length;
+                log('✏️ Editando produto existente, mantendo ordem: ' + ordem);
             } else {
-                // Novo: coloca no final
+                // Novo: coloca no final da lista atual
                 ordem = produtos.length;
-                log('Novo produto, ordem: ' + ordem);
+                log('➕ Novo produto, ordem definida: ' + ordem);
             }
 
             const produto = {
                 nome: document.getElementById('nomeProduto').value.trim(),
-                preco: parseFloat(document.getElementById('precoProduto').value),
+                preco: parseFloat(document.getElementById('precoProduto').value) || 0,
                 ambiente: document.getElementById('ambienteProduto').value,
                 subcategoria: document.getElementById('subcategoriaProduto').value,
                 disponibilidade: document.getElementById('disponibilidadeProduto').value,
                 imagens: imagens,
                 cores: document.getElementById('coresProduto').value.split(',').map(c => c.trim()).filter(c => c),
                 dimensoes: (document.getElementById('dimLargura').value || '-') + ' x ' + 
-                        (document.getElementById('dimAltura').value || '-') + ' x ' + 
-                        (document.getElementById('dimProfundidade').value || '-'),
+                          (document.getElementById('dimAltura').value || '-') + ' x ' + 
+                          (document.getElementById('dimProfundidade').value || '-'),
                 codigo: codigo,
-                ordem: ordem,  // Garantir que sempre tem ordem
+                ordem: ordem,
                 dataAtualizacao: Date.now()
             };
 
             try {
                 if (id) {
+                    // Atualizar existente
                     await db.ref('produtos/' + id).update(produto);
                     log('✅ Produto atualizado: ' + codigo);
                 } else {
+                    // Criar novo
                     const novoId = db.ref('produtos').push().key;
-                    produto.id = novoId;
                     await db.ref('produtos/' + novoId).set(produto);
-                    log('✅ Novo produto criado: ' + codigo + ' (ordem: ' + ordem + ')');
+                    log('✅ Novo produto criado: ' + codigo + ' (ID: ' + novoId.substring(0,8) + '..., ordem: ' + ordem + ')');
                 }
 
                 limparFormulario();
-                alert('✅ Produto salvo! Código: ' + codigo);
+                alert('✅ Produto salvo com sucesso!\n\nCódigo: ' + codigo);
+                
             } catch (error) {
-                log('❌ ERRO ao salvar: ' + error.message);
+                log('❌ ERRO ao salvar: ' + error.message, 'erro');
+                log('Stack: ' + error.stack, 'erro');
                 alert('❌ Erro ao salvar: ' + error.message);
             } finally {
                 document.getElementById('loadingOverlay').classList.remove('active');
             }
         }
+
+        // ============================================
+        // OUTRAS FUNÇÕES (mantidas e organizadas)
+        // ============================================
         function mostrarAba(aba) {
-            // Atualizar tabs
             document.querySelectorAll('.tab-btn-compact').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tab' + aba.charAt(0).toUpperCase() + aba.slice(1)).classList.add('active');
 
-            // Atualizar panels
             document.querySelectorAll('.tab-panel-admin').forEach(panel => panel.classList.remove('active'));
             document.getElementById('aba' + aba.charAt(0).toUpperCase() + aba.slice(1)).classList.add('active');
 
@@ -1197,37 +1337,46 @@
             for (let i = 0; i < 4; i++) {
                 codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
             }
-            return produtos.some(p => p.codigo === codigo) ? gerarCodigoProduto() : codigo;
+            // Verificar se já existe
+            if (produtos.some(p => p.codigo === codigo)) {
+                return gerarCodigoProduto();
+            }
+            return codigo;
         }
 
         function buscarPorCodigo() {
             const input = document.getElementById('buscaCodigoInput');
             const codigo = input.value.trim().toUpperCase();
+            
             if (!codigo) {
                 alert('Digite um código para buscar');
                 return;
             }
 
-            log('Buscando código: ' + codigo);
+            log('🔍 Buscando código: ' + codigo);
             const produto = produtos.find(p => p.codigo === codigo);
 
             if (!produto) {
-                alert('Produto não encontrado');
+                alert('Produto não encontrado com o código: ' + codigo);
                 input.value = '';
                 return;
             }
 
-            log('Produto encontrado: ' + produto.nome);
+            log('✅ Produto encontrado: ' + produto.nome);
             produtoBuscadoId = produto.id;
 
             const container = document.getElementById('buscaConteudo');
+            const imgSrc = (produto.imagens && produto.imagens[0]) ? produto.imagens[0] : '';
+            
             container.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--creme); border-radius: 8px;">
-                    <img src="${produto.imagens[0]}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 2px solid var(--dourado);">
+                    <img src="${imgSrc}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 2px solid var(--dourado);" onerror="this.style.display='none'">
                     <div style="text-align: left;">
                         <strong style="color: var(--vinho); display: block; margin-bottom: 5px;">${produto.nome}</strong>
                         <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
-                        <div style="color: #25D366; font-weight: bold; margin-top: 5px;">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                        <div style="color: #25D366; font-weight: bold; margin-top: 5px;">
+                            R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        </div>
                     </div>
                 </div>
             `;
@@ -1247,9 +1396,7 @@
             produtoBuscadoId = null;
         }
 
-        // ============================================
-        // UPLOAD DE IMAGENS
-        // ============================================
+        // Upload de imagens
         async function comprimirImagem(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1258,6 +1405,7 @@
                     img.onload = function() {
                         let width = img.width;
                         let height = img.height;
+                        
                         if (width > height) {
                             if (width > maxWidth) {
                                 height *= maxWidth / width;
@@ -1269,6 +1417,7 @@
                                 height = maxHeight;
                             }
                         }
+                        
                         const canvas = document.createElement('canvas');
                         canvas.width = width;
                         canvas.height = height;
@@ -1286,19 +1435,23 @@
 
         async function handleFileSelect(event) {
             const files = Array.from(event.target.files);
-            if (files.length > 0) {
-                document.getElementById('loadingOverlay').classList.add('active');
-                for (const file of files) {
-                    try {
-                        const imagemComprimida = await comprimirImagem(file);
-                        imagensTemp.push(imagemComprimida);
-                    } catch (err) {
-                        console.error('Erro:', err);
-                    }
+            if (files.length === 0) return;
+
+            document.getElementById('loadingOverlay').classList.add('active');
+            log('📸 Processando ' + files.length + ' imagens...');
+
+            for (const file of files) {
+                try {
+                    const imagemComprimida = await comprimirImagem(file);
+                    imagensTemp.push(imagemComprimida);
+                    log('✅ Imagem comprimida: ' + file.name);
+                } catch (err) {
+                    log('❌ Erro ao processar imagem: ' + err.message, 'erro');
                 }
-                atualizarPreview();
-                document.getElementById('loadingOverlay').classList.remove('active');
             }
+            
+            atualizarPreview();
+            document.getElementById('loadingOverlay').classList.remove('active');
         }
 
         function atualizarPreview() {
@@ -1314,9 +1467,10 @@
         function removerImagem(index) {
             imagensTemp.splice(index, 1);
             atualizarPreview();
+            log('🗑️ Imagem removida. Total: ' + imagensTemp.length);
         }
 
-        // Setup drag and drop
+        // Setup drag and drop na área de upload
         const uploadArea = document.querySelector('.upload-area-compact');
         if (uploadArea) {
             uploadArea.addEventListener('dragover', (e) => {
@@ -1324,14 +1478,17 @@
                 uploadArea.style.borderColor = 'var(--dourado)';
                 uploadArea.style.background = '#fff9e6';
             });
+            
             uploadArea.addEventListener('dragleave', () => {
                 uploadArea.style.borderColor = '#ddd';
                 uploadArea.style.background = '#fafafa';
             });
+            
             uploadArea.addEventListener('drop', async (e) => {
                 e.preventDefault();
                 uploadArea.style.borderColor = '#ddd';
                 uploadArea.style.background = '#fafafa';
+                
                 const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
                 if (files.length > 0) {
                     document.getElementById('loadingOverlay').classList.add('active');
@@ -1340,7 +1497,7 @@
                             const imagemComprimida = await comprimirImagem(file);
                             imagensTemp.push(imagemComprimida);
                         } catch (err) {
-                            console.error('Erro:', err);
+                            log('Erro: ' + err.message, 'erro');
                         }
                     }
                     atualizarPreview();
@@ -1352,7 +1509,9 @@
         function atualizarSubcategorias() {
             const ambiente = document.getElementById('ambienteProduto').value;
             const select = document.getElementById('subcategoriaProduto');
+            
             select.innerHTML = '<option value="">Escolha...</option>';
+            
             if (ambiente && SUBCATEGORIAS[ambiente]) {
                 SUBCATEGORIAS[ambiente].forEach(sub => {
                     select.innerHTML += `<option value="${sub}">${sub}</option>`;
@@ -1366,157 +1525,23 @@
             document.querySelector('.disp-option-compact.' + (tipo === 'pronta-entrega' ? 'pronta' : 'encomenda')).classList.add('selected');
         }
 
-        // ============================================
-        // SALVAR PRODUTO - CORREÇÃO DA ORDEM
-        // ============================================
-        async function salvarProduto(event) {
-            event.preventDefault();
-
-            if (imagensTemp.length === 0 && !document.getElementById('produtoId').value) {
-                alert('Adicione pelo menos uma foto!');
-                return;
-            }
-
-            if (!document.getElementById('disponibilidadeProduto').value) {
-                alert('Selecione a disponibilidade!');
-                return;
-            }
-
-            document.getElementById('loadingOverlay').classList.add('active');
-            log('Salvando produto...');
-
-            const id = document.getElementById('produtoId').value;
-            let imagens = imagensTemp.length > 0 ? [...imagensTemp] : [];
-
-            if (id && imagens.length === 0) {
-                const produtoAntigo = produtos.find(p => p.id == id);
-                if (produtoAntigo) imagens = [...produtoAntigo.imagens];
-            }
-
-            let codigo = document.getElementById('codigoProduto').value || gerarCodigoProduto();
-
-            // CORREÇÃO: Definir ordem corretamente
-            let ordem = 0;
-            if (id) {
-                // Se está editando, mantém a ordem existente
-                const produtoExistente = produtos.find(p => p.id == id);
-                ordem = produtoExistente ? (produtoExistente.ordem || 0) : produtos.length;
-            } else {
-                // Se é novo, coloca no final
-                ordem = produtos.length;
-            }
-
-            const produto = {
-                nome: document.getElementById('nomeProduto').value.trim(),
-                preco: parseFloat(document.getElementById('precoProduto').value),
-                ambiente: document.getElementById('ambienteProduto').value,
-                subcategoria: document.getElementById('subcategoriaProduto').value,
-                disponibilidade: document.getElementById('disponibilidadeProduto').value,
-                imagens: imagens,
-                cores: document.getElementById('coresProduto').value.split(',').map(c => c.trim()).filter(c => c),
-                dimensoes: (document.getElementById('dimLargura').value || '-') + ' x ' + 
-                          (document.getElementById('dimAltura').value || '-') + ' x ' + 
-                          (document.getElementById('dimProfundidade').value || '-'),
-                codigo: codigo,
-                ordem: ordem,  // CORREÇÃO: Garantir que ordem sempre existe
-                dataAtualizacao: Date.now()
-            };
-
-            try {
-                if (id) {
-                    await db.ref('produtos/' + id).update(produto);
-                    log('Produto atualizado: ' + codigo);
-                } else {
-                    const novoId = db.ref('produtos').push().key;
-                    produto.id = novoId;
-                    await db.ref('produtos/' + novoId).set(produto);
-                    log('Novo produto criado: ' + codigo + ' (ordem: ' + ordem + ')');
-                }
-
-                limparFormulario();
-                alert('✅ Produto salvo com sucesso! Código: ' + codigo);
-            } catch (error) {
-                log('ERRO ao salvar: ' + error.message);
-                console.error('Erro ao salvar:', error);
-                alert('❌ Erro ao salvar. Tente novamente.');
-            } finally {
-                document.getElementById('loadingOverlay').classList.remove('active');
-            }
-        }
-
-        // ============================================
-        // CORREÇÃO: Atualizar lista - garantir renderização
-        // ============================================
-        function atualizarLista() {
-            const container = document.getElementById('listaProdutos');
-            const contador = document.getElementById('contadorProdutos');
-
-            if (!container) {
-                log('ERRO: Container não encontrado');
-                return;
-            }
-
-            // Atualizar contador
-            if (contador) {
-                contador.textContent = produtos.length + ' itens';
-            }
-
-            log('Renderizando ' + produtos.length + ' produtos');
-
-            if (produtos.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #666;">
-                        <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 10px; color: var(--dourado);"></i>
-                        <p style="font-size: 0.9rem;">Nenhum produto cadastrado</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // CORREÇÃO: Ordenar por ordem (undefined vai pro final)
-            const produtosOrdenados = [...produtos].sort((a, b) => {
-                const ordemA = a.ordem !== undefined ? a.ordem : 999999;
-                const ordemB = b.ordem !== undefined ? b.ordem : 999999;
-                return ordemA - ordemB;
-            });
-
-            const svgPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect fill='%23ddd' width='50' height='50'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ESem%3C/text%3E%3C/svg%3E";
-
-            container.innerHTML = produtosOrdenados.map(produto => {
-                const imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : svgPlaceholder;
-
-                return `
-                    <div class="produto-item-compact" data-id="${produto.id}">
-                        <img src="${imgSrc}" alt="${produto.nome}" loading="lazy" onerror="this.src='${svgPlaceholder}'">
-                        <div class="produto-info-compact">
-                            <div>
-                                <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
-                                <span style="font-size: 0.75rem; color: #666;">${produto.ambiente}</span>
-                            </div>
-                            <h4>${produto.nome}</h4>
-                            <div class="preco">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                        </div>
-                        <div class="produto-acoes-compact">
-                            <button class="btn-acao-compact btn-editar-compact" onclick="editarProduto('${produto.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-                            <button class="btn-acao-compact btn-excluir-compact" onclick="excluirProduto('${produto.id}')" title="Excluir"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            log('Lista atualizada com sucesso');
-        }
-
         function editarProduto(id) {
             const produto = produtos.find(p => p.id == id);
-            if (!produto) return;
+            if (!produto) {
+                log('❌ Produto não encontrado para edição: ' + id, 'erro');
+                return;
+            }
+
+            log('✏️ Editando produto: ' + produto.nome);
 
             document.getElementById('produtoId').value = produto.id;
             document.getElementById('nomeProduto').value = produto.nome;
             document.getElementById('precoProduto').value = produto.preco;
             document.getElementById('ambienteProduto').value = produto.ambiente;
+            
             atualizarSubcategorias();
             document.getElementById('subcategoriaProduto').value = produto.subcategoria;
+            
             selectDisponibilidade(produto.disponibilidade);
 
             const dims = produto.dimensoes ? produto.dimensoes.split(' x ') : ['', '', ''];
@@ -1537,27 +1562,27 @@
                 atualizarPreview();
             }
 
-            document.getElementById('tituloForm').innerHTML = '✏️ Editar';
+            document.getElementById('tituloForm').innerHTML = '✏️ Editar Produto';
             document.getElementById('btnCancelar').style.display = 'block';
 
-            // Mudar para aba de cadastro
             mostrarAba('cadastro');
         }
 
         async function excluirProduto(id) {
-            if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+            if (!confirm('⚠️ Tem certeza que deseja excluir este produto?\n\nEsta ação não pode ser desfeita.')) {
+                return;
+            }
 
             document.getElementById('loadingOverlay').classList.add('active');
-            log('Excluindo produto: ' + id);
+            log('🗑️ Excluindo produto: ' + id);
 
             try {
                 await db.ref('produtos/' + id).remove();
-                log('Produto excluído com sucesso');
+                log('✅ Produto excluído com sucesso');
                 alert('✅ Produto excluído com sucesso!');
             } catch (error) {
-                log('ERRO ao excluir: ' + error.message);
-                console.error('Erro ao excluir:', error);
-                alert('❌ Erro ao excluir. Tente novamente.');
+                log('❌ ERRO ao excluir: ' + error.message, 'erro');
+                alert('❌ Erro ao excluir: ' + error.message);
             } finally {
                 document.getElementById('loadingOverlay').classList.remove('active');
             }
@@ -1565,6 +1590,7 @@
 
         function cancelarEdicao() {
             limparFormulario();
+            log('❌ Edição cancelada');
         }
 
         function limparFormulario() {
@@ -1581,9 +1607,7 @@
             document.getElementById('btnCancelar').style.display = 'none';
         }
 
-        // ============================================
-        // ORDENAÇÃO
-        // ============================================
+        // Ordenação
         function selecionarOrdenacao(ambiente) {
             ordenacaoAtual = ambiente;
             document.querySelectorAll('#abaOrdenar .tab-btn-compact').forEach(btn => btn.classList.remove('active'));
@@ -1593,6 +1617,7 @@
 
         function atualizarListaOrdenacao() {
             const container = document.getElementById('ordenarLista');
+            
             let filtrados = ordenacaoAtual === 'todos' 
                 ? [...produtos] 
                 : produtos.filter(p => p.ambiente === ordenacaoAtual);
@@ -1604,20 +1629,25 @@
                 return;
             }
 
-            container.innerHTML = filtrados.map((produto, index) => `
-                <div class="produto-item-compact" draggable="true" data-id="${produto.id}" data-index="${index}">
-                    <i class="fas fa-grip-vertical drag-handle"></i>
-                    <img src="${produto.imagens[0]}" alt="${produto.nome}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 2px solid var(--dourado);">
-                    <div style="flex: 1;">
-                        <h4 style="color: var(--vinho); font-size: 0.95rem; margin-bottom: 3px;">${produto.nome}</h4>
-                        <div style="font-size: 0.8rem; color: #666;">
-                            <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
-                            ${produto.ambiente} | ${produto.subcategoria}
+            container.innerHTML = filtrados.map((produto, index) => {
+                const imgSrc = (produto.imagens && produto.imagens[0]) ? produto.imagens[0] : '';
+                return `
+                    <div class="produto-item-compact" draggable="true" data-id="${produto.id}" data-index="${index}">
+                        <i class="fas fa-grip-vertical drag-handle"></i>
+                        <img src="${imgSrc}" alt="${produto.nome}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 2px solid var(--dourado);" onerror="this.style.display='none'">
+                        <div style="flex: 1;">
+                            <h4 style="color: var(--vinho); font-size: 0.95rem; margin-bottom: 3px;">${produto.nome}</h4>
+                            <div style="font-size: 0.8rem; color: #666;">
+                                <span class="codigo-badge-compact">${produto.codigo || '----'}</span>
+                                ${produto.ambiente} | ${produto.subcategoria}
+                            </div>
+                        </div>
+                        <div style="color: #25D366; font-weight: bold;">
+                            R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                         </div>
                     </div>
-                    <div style="color: #25D366; font-weight: bold;">R$ ${produto.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             inicializarDragAndDrop(container);
         }
@@ -1675,8 +1705,8 @@
         function handleTouchMove(e) {
             e.preventDefault();
             if (!draggedItem) return;
+            
             touchCurrentY = e.touches[0].clientY;
-
             const container = document.getElementById('ordenarLista');
             const items = container.querySelectorAll('.produto-item-compact:not(.dragging)');
 
@@ -1709,10 +1739,11 @@
         async function salvarOrdem() {
             const container = document.getElementById('ordenarLista');
             const items = container.querySelectorAll('.produto-item-compact');
+            
             if (items.length === 0) return;
 
             document.getElementById('loadingOverlay').classList.add('active');
-            log('Salvando ordem...');
+            log('💾 Salvando ordem de ' + items.length + ' produtos...');
 
             try {
                 const atualizacoes = {};
@@ -1720,6 +1751,7 @@
                     const id = item.getAttribute('data-id');
                     atualizacoes['produtos/' + id + '/ordem'] = index;
                 });
+
                 await db.ref().update(atualizacoes);
 
                 // Atualizar ordem local
@@ -1730,17 +1762,18 @@
                 });
 
                 localStorage.setItem('produtos_backup', JSON.stringify(produtos));
-                log('Ordem salva com sucesso');
+                log('✅ Ordem salva com sucesso');
                 alert('✅ Ordem salva com sucesso!');
+                
             } catch (error) {
-                log('ERRO ao salvar ordem: ' + error.message);
-                console.error('Erro ao salvar ordem:', error);
+                log('❌ ERRO ao salvar ordem: ' + error.message, 'erro');
                 alert('❌ Erro ao salvar ordem: ' + error.message);
             } finally {
                 document.getElementById('loadingOverlay').classList.remove('active');
             }
         }
 
+        // Fechar modal ao clicar fora
         document.getElementById('modalBusca').addEventListener('click', function(e) {
             if (e.target === this) fecharBusca();
         });
@@ -1749,8 +1782,11 @@
         window.addEventListener('beforeunload', function() {
             if (firebaseListener) {
                 firebaseListener.off();
+                log('👋 Página fechada, listener removido');
             }
         });
+
+        log('📝 Script carregado completamente. Aguardando DOM...');
     </script>
 </body>
 </html>
