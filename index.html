@@ -893,6 +893,7 @@
             .ambientes-menu { gap: 6px; }
             .ambiente-btn { padding: 8px 12px; font-size: 0.7rem; }
 
+            /* CORREÇÃO DROPDOWN MOBILE - FECHAR COM CLIQUE ÚNICO */
             .subcategorias-dropdown {
                 position: fixed !important;
                 left: 50% !important;
@@ -909,8 +910,24 @@
                 display: none;
             }
 
-            .ambiente-item.active .subcategorias-dropdown {
+            .subcategorias-dropdown.active {
                 display: block !important;
+            }
+
+            /* Overlay para fechar ao clicar fora */
+            .dropdown-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 999998;
+            }
+
+            .dropdown-overlay.active {
+                display: block;
             }
 
             .produtos-grid {
@@ -967,7 +984,27 @@
             .produtos-grid { grid-template-columns: 1fr; }
             .hero-logo-wrap { width: 180px; }
         }
+
+        /* CORREÇÃO MODAL DESKTOP - DIMENSÕES */
+        @media (min-width: 769px) {
+            .dimensoes-row {
+                display: flex;
+                gap: 10px;
+                flex-wrap: nowrap;
+            }
+
+            .dimensao-item-compacta {
+                min-width: auto;
+                flex: 1;
+                white-space: nowrap;
+            }
+
+            .dimensao-item-compacta .valor {
+                font-size: 0.85rem;
+            }
+        }
     </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -976,6 +1013,9 @@
         <div class="loading-spinner"></div>
         <p>Carregando produtos...</p>
     </div>
+
+    <!-- Overlay para dropdown mobile -->
+    <div id="dropdownOverlay" class="dropdown-overlay" onclick="fecharDropdownMobile()"></div>
 
     <!-- Header -->
     <header class="header">
@@ -1030,86 +1070,86 @@
                         <i class="fas fa-th-large"></i> Todos
                     </button>
 
-                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
+                    <div class="ambiente-item" data-ambiente="dormitorio">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('dormitorio')">
                             <i class="fas fa-bed"></i> Dormitório <i class="fas fa-chevron-down"></i>
                         </button>
-                        <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Box')">Box</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Box Baú')">Box Baú</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cabeceira')">Cabeceira</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cama')">Cama</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Colchão')">Colchão</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cômoda')">Cômoda</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Guarda-Roupa')">Guarda-Roupa</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Mesa de Cabeceira')">Mesa de Cabeceira</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Recamier')">Recamier</div>
+                        <div class="subcategorias-dropdown" id="dropdown-dormitorio">
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Box'); fecharDropdownMobile();">Box</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Box Baú'); fecharDropdownMobile();">Box Baú</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cabeceira'); fecharDropdownMobile();">Cabeceira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cama'); fecharDropdownMobile();">Cama</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Colchão'); fecharDropdownMobile();">Colchão</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Cômoda'); fecharDropdownMobile();">Cômoda</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Guarda-Roupa'); fecharDropdownMobile();">Guarda-Roupa</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Mesa de Cabeceira'); fecharDropdownMobile();">Mesa de Cabeceira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('dormitorio', 'Recamier'); fecharDropdownMobile();">Recamier</div>
                         </div>
                     </div>
 
-                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
+                    <div class="ambiente-item" data-ambiente="cozinha">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('cozinha')">
                             <i class="fas fa-utensils"></i> Cozinha <i class="fas fa-chevron-down"></i>
                         </button>
-                        <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Armário')">Armário</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Cadeira')">Cadeira</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Conj. Mesa de Jantar')">Conj. Mesa de Jantar</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Mesa')">Mesa</div>
+                        <div class="subcategorias-dropdown" id="dropdown-cozinha">
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Armário'); fecharDropdownMobile();">Armário</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Cadeira'); fecharDropdownMobile();">Cadeira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Conj. Mesa de Jantar'); fecharDropdownMobile();">Conj. Mesa de Jantar</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('cozinha', 'Mesa'); fecharDropdownMobile();">Mesa</div>
                         </div>
                     </div>
 
-                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
+                    <div class="ambiente-item" data-ambiente="sala">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('sala')">
                             <i class="fas fa-couch"></i> Sala <i class="fas fa-chevron-down"></i>
                         </button>
-                        <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Aparador')">Aparador</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Buffet')">Buffet</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Cristaleira')">Cristaleira</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Home')">Home</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Mesa de Centro')">Mesa de Centro</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Painel')">Painel</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Poltrona')">Poltrona</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Rack')">Rack</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Sofá')">Sofá</div>
+                        <div class="subcategorias-dropdown" id="dropdown-sala">
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Aparador'); fecharDropdownMobile();">Aparador</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Buffet'); fecharDropdownMobile();">Buffet</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Cristaleira'); fecharDropdownMobile();">Cristaleira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Home'); fecharDropdownMobile();">Home</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Mesa de Centro'); fecharDropdownMobile();">Mesa de Centro</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Painel'); fecharDropdownMobile();">Painel</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Poltrona'); fecharDropdownMobile();">Poltrona</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Rack'); fecharDropdownMobile();">Rack</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('sala', 'Sofá'); fecharDropdownMobile();">Sofá</div>
                         </div>
                     </div>
 
-                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
+                    <div class="ambiente-item" data-ambiente="colchoes">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('colchoes')">
                             <i class="fas fa-mattress-pillow"></i> Colchões <i class="fas fa-chevron-down"></i>
                         </button>
-                        <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Solteiro')">Solteiro</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Solteiro King')">Solteiro King</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Casal')">Casal</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Queen')">Queen</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'King')">King</div>
+                        <div class="subcategorias-dropdown" id="dropdown-colchoes">
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Solteiro'); fecharDropdownMobile();">Solteiro</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Solteiro King'); fecharDropdownMobile();">Solteiro King</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Casal'); fecharDropdownMobile();">Casal</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'Queen'); fecharDropdownMobile();">Queen</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('colchoes', 'King'); fecharDropdownMobile();">King</div>
                         </div>
                     </div>
 
-                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
+                    <div class="ambiente-item" data-ambiente="complementos">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('complementos')">
                             <i class="fas fa-plus-circle"></i> Complementos <i class="fas fa-chevron-down"></i>
                         </button>
-                        <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Mesa de Computador')">Mesa de Computador</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Multiuso')">Multiuso</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Multiuso Área Serviço')">Multiuso Área Serviço</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Penteadeira')">Penteadeira</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Puff')">Puff</div>
+                        <div class="subcategorias-dropdown" id="dropdown-complementos">
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Mesa de Computador'); fecharDropdownMobile();">Mesa de Computador</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Multiuso'); fecharDropdownMobile();">Multiuso</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Multiuso Área Serviço'); fecharDropdownMobile();">Multiuso Área Serviço</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Penteadeira'); fecharDropdownMobile();">Penteadeira</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('complementos', 'Puff'); fecharDropdownMobile();">Puff</div>
                         </div>
                     </div>
 
-                    <div class="ambiente-item" onclick="toggleDropdownMobile(this)">
+                    <div class="ambiente-item" data-ambiente="infantil">
                         <button class="ambiente-btn" onclick="event.stopPropagation(); filtrarProdutos('infantil')">
                             <i class="fas fa-baby"></i> Infantil <i class="fas fa-chevron-down"></i>
                         </button>
-                        <div class="subcategorias-dropdown">
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Berço')">Berço</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Cômoda')">Cômoda</div>
-                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Guarda-Roupa')">Guarda-Roupa</div>
+                        <div class="subcategorias-dropdown" id="dropdown-infantil">
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Berço'); fecharDropdownMobile();">Berço</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Cômoda'); fecharDropdownMobile();">Cômoda</div>
+                            <div class="subcategoria-item" onclick="event.stopPropagation(); filtrarSubcategoria('infantil', 'Guarda-Roupa'); fecharDropdownMobile();">Guarda-Roupa</div>
                         </div>
                     </div>
                 </div>
@@ -1293,6 +1333,80 @@
 
     <a href="admin.html" class="admin-link-sutil">adm</a>
 
+    <script>
+        // Menu mobile
+        function toggleMenu() {
+            const nav = document.getElementById('mainNav');
+            nav.classList.toggle('active');
+        }
+
+        function closeMenu() {
+            const nav = document.getElementById('mainNav');
+            nav.classList.remove('active');
+        }
+
+        // Dropdown mobile - Sistema melhorado
+        let dropdownAberto = null;
+
+        // Adicionar event listeners aos botões de ambiente
+        document.querySelectorAll('.ambiente-item').forEach(item => {
+            const btn = item.querySelector('.ambiente-btn');
+            const dropdown = item.querySelector('.subcategorias-dropdown');
+
+            btn.addEventListener('click', function(e) {
+                // Verificar se é mobile
+                if (window.innerWidth <= 768) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Se já tem dropdown aberto e é diferente, fecha o anterior
+                    if (dropdownAberto && dropdownAberto !== dropdown) {
+                        dropdownAberto.classList.remove('active');
+                    }
+
+                    // Toggle do dropdown atual
+                    dropdown.classList.toggle('active');
+
+                    // Atualiza referência
+                    if (dropdown.classList.contains('active')) {
+                        dropdownAberto = dropdown;
+                        document.getElementById('dropdownOverlay').classList.add('active');
+                    } else {
+                        dropdownAberto = null;
+                        document.getElementById('dropdownOverlay').classList.remove('active');
+                    }
+                }
+            });
+        });
+
+        function fecharDropdownMobile() {
+            // Fecha todos os dropdowns
+            document.querySelectorAll('.subcategorias-dropdown').forEach(d => {
+                d.classList.remove('active');
+            });
+            document.getElementById('dropdownOverlay').classList.remove('active');
+            dropdownAberto = null;
+        }
+
+        // Fechar ao clicar fora (desktop)
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth > 768) {
+                const isClickInside = e.target.closest('.ambiente-item');
+                if (!isClickInside) {
+                    document.querySelectorAll('.subcategorias-dropdown').forEach(d => {
+                        d.style.display = '';
+                    });
+                }
+            }
+        });
+
+        // Fechar ao redimensionar
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                fecharDropdownMobile();
+            }
+        });
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
