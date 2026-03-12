@@ -1,7 +1,5 @@
 // ============================================
-// RIBEIRIO MÓVEIS - APP.JS v3.2 (CORES CORRIGIDAS)
-// PROBLEMA: Cores compostas (Cinamomo, Carvalho) ficam brancas
-// SOLUÇÃO: Sistema inteligente de reconhecimento de cores
+// RIBEIRIO MÓVEIS - APP.JS v3.3 (CORREÇÃO FINAL)
 // ============================================
 
 let produtos = [];
@@ -31,16 +29,22 @@ const AMBIENTES = {
 };
 
 // ============================================
-// BANCO DE DADOS DE CORES EXPANDIDO
+// BANCO DE DADOS DE CORES CORRIGIDO
 // ============================================
 const CORES_MOVELARIA = {
-    // Madeiras
-    'carvalho': '#D4A574',
-    'carvalho claro': '#E6C9A8',
+    // Madeiras - CORRIGIDO
+    'carvalho': '#C4A35A',
+    'carvalho claro': '#D4B896',
     'carvalho escuro': '#8B6914',
-    'nogueira': '#8B5A2B',
-    'nogueira clara': '#A67B5B',
-    'nogueira escura': '#5C4033',
+    'noce': '#8B5A2B',
+    'noce bronze': '#CD7F32',
+    'noce milano': '#9A8260',
+    'noce málaga': '#8B6914',
+    'malaga': '#8B6914',
+    'málaga': '#8B6914',
+    'nogueira': '#5C4033',
+    'nogueira clara': '#8B7355',
+    'nogueira escura': '#3D2817',
     'imbuia': '#8B7D6B',
     'imbuia clara': '#A89F91',
     'imbuia escura': '#6B5D4F',
@@ -50,14 +54,12 @@ const CORES_MOVELARIA = {
     'cinamomo': '#D2B48C',
     'cinamomo claro': '#E5D4B8',
     'cinamomo escuro': '#B8956A',
+    'cedro': '#8B4513',
+    'cedro claro': '#A0522D',
+    'cedro escuro': '#654321',
     'amendoa': '#D4A574',
     'amêndoa': '#D4A574',
     'amendoa off white': '#E8DCC4',
-    'noce': '#8B7355',
-    'noce milano': '#9A8260',
-    'noce málaga': '#8B6914',
-    'malaga': '#8B6914',
-    'málaga': '#8B6914',
     'castanho': '#8B4513',
     'castanho claro': '#A0522D',
     'castanho escuro': '#654321',
@@ -78,7 +80,7 @@ const CORES_MOVELARIA = {
     'rustico': '#8B7355',
     'rústico claro': '#A89F91',
     'rústico escuro': '#6B5344',
-    
+
     // Cores sólidas
     'branco': '#FFFFFF',
     'off white': '#F5F5F5',
@@ -100,7 +102,7 @@ const CORES_MOVELARIA = {
     'marrom claro': '#A0522D',
     'marrom escuro': '#654321',
     'marrom café': '#6F4E37',
-    
+
     // Cores vibrantes
     'vermelho': '#FF0000',
     'vermelho cereja': '#DE3163',
@@ -145,7 +147,7 @@ const CORES_MOVELARIA = {
     'bronze': '#CD7F32',
     'prata': '#C0C0C0',
     'platina': '#E5E4E2',
-    
+
     // Neutros
     'natural': '#D2B48C',
     'crú': '#F5DEB3',
@@ -162,30 +164,49 @@ const CORES_MOVELARIA = {
 };
 
 // ============================================
-// FUNÇÃO INTELIGENTE DE CORES
+// FUNÇÃO INTELIGENTE DE CORES COM SUPORTE A CORES COMPOSTAS
 // ============================================
 function getColorCode(cor) {
     if (!cor || typeof cor !== 'string') return '#ddd';
-    
+
+    // Verificar se é cor composta (contém - ou / ou &)
+    const separadores = /[-/&|,]/;
+    if (separadores.test(cor)) {
+        const cores = cor.split(separadores).map(c => c.trim()).filter(c => c);
+        if (cores.length >= 2) {
+            // Retorna array de cores para gradiente
+            return {
+                tipo: 'gradiente',
+                cores: cores.map(c => getSingleColorCode(c))
+            };
+        }
+    }
+
+    return {
+        tipo: 'solido',
+        cor: getSingleColorCode(cor)
+    };
+}
+
+function getSingleColorCode(cor) {
     // Normalizar: remover acentos, lowercase, trim
     let corNormalizada = cor.toLowerCase().trim();
-    
+
     // Remover acentos
     corNormalizada = corNormalizada.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    
+
     // Tentar match exato primeiro
     if (CORES_MOVELARIA[corNormalizada]) {
         return CORES_MOVELARIA[corNormalizada];
     }
-    
-    // Tentar match parcial (se a cor contém uma palavra-chave)
+
+    // Tentar match parcial
     for (let [nome, hex] of Object.entries(CORES_MOVELARIA)) {
-        // Verificar se a cor informada contém o nome da cor ou vice-versa
         if (corNormalizada.includes(nome) || nome.includes(corNormalizada)) {
             return hex;
         }
     }
-    
+
     // Tentar encontrar palavras individuais
     const palavras = corNormalizada.split(/\s+/);
     for (let palavra of palavras) {
@@ -193,24 +214,22 @@ function getColorCode(cor) {
             return CORES_MOVELARIA[palavra];
         }
     }
-    
-    // Se não encontrou nada, gerar uma cor baseada no nome (hash)
-    // Isso garante que a mesma cor sempre terá o mesmo hex, mas diferentes cores terão hex diferentes
+
+    // Gerar cor consistente baseada no nome
     return gerarCorDoNome(corNormalizada);
 }
 
-// Gerar cor consistente baseada no nome (para cores desconhecidas)
+// Gerar cor consistente baseada no nome
 function gerarCorDoNome(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
-    // Gerar cor pastel (mais suave para móveis)
+
     const h = Math.abs(hash % 360);
-    const s = 25 + Math.abs((hash >> 8) % 35); // Saturação baixa (25-60%)
-    const l = 60 + Math.abs((hash >> 16) % 25); // Luminosidade média-alta (60-85%)
-    
+    const s = 25 + Math.abs((hash >> 8) % 35);
+    const l = 60 + Math.abs((hash >> 16) % 25);
+
     return hslToHex(h, s, l);
 }
 
@@ -226,22 +245,34 @@ function hslToHex(h, s, l) {
     return `#${f(0)}${f(8)}${f(4)}`;
 }
 
+// Gerar estilo CSS para a bolinha de cor
+function getColorStyle(corObj) {
+    if (corObj.tipo === 'gradiente') {
+        const cores = corObj.cores;
+        if (cores.length === 2) {
+            return `background: linear-gradient(135deg, ${cores[0]} 50%, ${cores[1]} 50%);`;
+        } else {
+            return `background: linear-gradient(135deg, ${cores.join(', ')});`;
+        }
+    }
+    return `background-color: ${corObj.cor};`;
+}
+
 // ============================================
 // INICIALIZAÇÃO
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Ribeiro] 🚀 Iniciando app v3.2 (cores corrigidas)...');
+    console.log('[Ribeiro] 🚀 Iniciando app v3.3 (correções finais)...');
 
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
         console.log('[Ribeiro] ✅ Firebase inicializado');
-        
-        // Limpar cache antigo
+
         try {
             localStorage.removeItem('produtos_backup');
         } catch(e) {}
-        
+
         carregarProdutosFirebase();
     } catch (e) {
         console.error('[Ribeiro] ❌ Erro ao inicializar:', e);
@@ -268,7 +299,7 @@ function carregarProdutosFirebase() {
     }
 
     const produtosRef = db.ref('produtos');
-    
+
     firebaseListener = produtosRef.on('value', function(snapshot) {
         const dados = snapshot.val();
         console.log('[Ribeiro] 📥 Dados recebidos:', dados ? Object.keys(dados).length : 0, 'itens');
@@ -286,7 +317,7 @@ function carregarProdutosFirebase() {
 
             console.log('[Ribeiro] ✅ Produtos processados:', produtos.length);
             renderProdutos('todos');
-            
+
         } else {
             produtos = [];
             renderProdutos('todos');
@@ -339,7 +370,7 @@ function renderProdutos(filtro, subcategoria) {
     }
 
     const fragment = document.createDocumentFragment();
-    
+
     filtrados.forEach(function(produto) {
         fragment.appendChild(createProdutoCard(produto));
     });
@@ -365,8 +396,9 @@ function createProdutoCard(produto) {
 
     // Processar cores com a nova função inteligente
     var cores = (produto.cores || []).slice(0, 4).map(function(cor) {
-        const corHex = getColorCode(cor);
-        return '<span class="color-dot" style="background-color: ' + corHex + '" title="' + cor + '"></span>';
+        const corObj = getColorCode(cor);
+        const style = getColorStyle(corObj);
+        return '<span class="color-dot" style="' + style + '" title="' + cor + '"></span>';
     }).join('');
 
     var imgSrc = produto.imagens && produto.imagens[0] ? produto.imagens[0] : '';
@@ -428,13 +460,28 @@ function openModal(produto) {
     var coresContainer = document.getElementById('colorOptions');
     var cores = produto.cores || [];
     coresContainer.innerHTML = cores.map(function(cor, idx) {
-        const corHex = getColorCode(cor);
-        return '<span class="color-option ' + (idx === 0 ? 'active' : '') + '" onclick="selectColor(this)" style="border-color: ' + corHex + '">' + cor + '</span>';
+        const corObj = getColorCode(cor);
+        let style = '';
+        if (corObj.tipo === 'gradiente') {
+            style = getColorStyle(corObj);
+        } else {
+            style = 'background-color: ' + corObj.cor + '; color: ' + (isLightColor(corObj.cor) ? '#333' : '#fff') + ';';
+        }
+        return '<span class="color-option ' + (idx === 0 ? 'active' : '') + '" onclick="selectColor(this)" style="' + style + '">' + cor + '</span>';
     }).join('');
 
     updateGallery();
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+}
+
+function isLightColor(hexColor) {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return brightness > 155;
 }
 
 function closeModal() {
@@ -532,4 +579,4 @@ var style = document.createElement('style');
 style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
 document.head.appendChild(style);
 
-console.log('[Ribeiro] ✅ App.js v3.2 carregado (cores inteligentes)');
+console.log('[Ribeiro] ✅ App.js v3.3 carregado (cores corrigidas + gradientes)');
