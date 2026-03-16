@@ -32,12 +32,12 @@ const AMBIENTES = {
 // BANCO DE DADOS DE CORES CORRIGIDO
 // ============================================
 const CORES_MOVELARIA = {
-    // Madeiras - CORRIGIDO
-    'carvalho': '#65470865',
+    // Madeiras
+    'carvalho': '#654321',           // era #65470865
     'carvalho claro': '#D4B896',
     'carvalho escuro': '#8B6914',
     'noce': '#8B5A2B',
-    'noce bronze': '#785635ab',
+    'noce bronze': '#785635',        // era #785635ab
     'noce milano': '#9A8260',
     'noce málaga': '#8B6914',
     'malaga': '#8B6914',
@@ -45,16 +45,16 @@ const CORES_MOVELARIA = {
     'nogueira': '#5C4033',
     'nogueira clara': '#8B7355',
     'nogueira escura': '#3D2817',
-    'imbuia': '#9f510dc0',
+    'imbuia': '#66300a',             // era #9f510dc0
     'imbuia clara': '#A89F91',
     'imbuia escura': '#6B5D4F',
-    'freijo': '#a1671bd7',
+    'freijo': '#A0522D',             // era #a1671bd7
     'freijo claro': '#D4B896',
     'freijo escuro': '#9A8260',
-    'cinamomo': '#ab601b',
+    'cinamomo': '#AB601B',           // era #ab601b
     'cinamomo claro': '#E5D4B8',
     'cinamomo escuro': '#B8956A',
-    'cedro': '#ae761ac0',
+    'cedro': '#A0522D',              // era #ae761ac0
     'cedro claro': '#A0522D',
     'cedro escuro': '#654321',
     'amendoa': '#D4A574',
@@ -75,7 +75,7 @@ const CORES_MOVELARIA = {
     'caramelo': '#C68E17',
     'avelã': '#A89F91',
     'avela': '#A89F91',
-    'cerejeira': '#dfb726',
+    'cerejeira': '#df7f26',           // era #df7f26 (cerejeira é marrom-avermelhado!)
     'rústico': '#8B7355',
     'rustico': '#8B7355',
     'rústico claro': '#A89F91',
@@ -83,16 +83,16 @@ const CORES_MOVELARIA = {
 
     // Cores sólidas
     'branco': '#FFFFFF',
-    'off white': '#FFFFF0',
-    'offwhite': '#FFFFF0',
-    'off-white': '#FFFFE0',
+    'off white': '#f8f8e0',          // off white mais quente
+    'offwhite': '#f8f8e0',
+    'off-white': '#f8f8e0',
     'creme': '#FFFDD0',
     'bege': '#F5F5DC',
     'bege claro': '#F5F5DC',
     'bege escuro': '#C2B280',
     'marfim': '#FFFFF0',
     'cinza': '#808080',
-    'bali': '#d3d3d3eb',
+    'bali': '#D3D3D3',               // era #d3d3d3eb
     'cinza escuro': '#696969',
     'cinza grafite': '#414141',
     'grafite': '#414141',
