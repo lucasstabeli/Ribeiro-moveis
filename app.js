@@ -533,10 +533,10 @@ function enviarWhatsApp() {
     if (!currentProduto) return;
 
     const cor = document.querySelector('.color-option.active')?.textContent || (currentProduto.cores || [])[0] || '';
-    const disp = currentProduto.disponibilidade === 'pronta-entrega' ? '*Pronta Entrega* ✅' : '*Sob Encomenda* ⏰';
+    const disp = currentProduto.disponibilidade === 'pronta-entrega' ? '*Pronta Entrega* ' : '*Sob Encomenda* ';
     const cod = currentProduto.codigo || 'N/A';
 
-    const mensagem = `*Ribeiro Móveis e Colchões* 👑\n\nOlá! Tenho interesse no produto:\n\n📦 *${currentProduto.nome}*\n🎨 Cor: ${cor}\n${disp}\n🏷️ Código: ${cod}\n\nPor favor, me envie mais informações`;
+    const mensagem = `*Ribeiro Móveis e Colchões* \n\nOlá! Tenho interesse no produto:\n\n *${currentProduto.nome}*\n Cor: ${cor}\n${disp}\n Código: ${cod}\n\nPor favor, me envie mais informações`;
 
     const mensagemCodificada = encodeURIComponent(mensagem);
     const numero = '5512991652100';
