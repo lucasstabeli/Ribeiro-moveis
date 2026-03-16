@@ -149,8 +149,8 @@ const CORES_MOVELARIA = {
     'platina': '#E5E4E2',
 
     // Neutros
-    'natural': '#D2B48C',
-    'crú': '#F5DEB3',
+    'nature': '#AB601B',
+    'chumbo': '#3f3f3f',
     'cru': '#F5DEB3',
     'linho': '#FAF0E6',
     'areia': '#F4A460',
