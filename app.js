@@ -22,7 +22,7 @@ const firebaseConfig = {
 const AMBIENTES = {
     'dormitorio': { nome: 'Dormitório', icone: 'fa-bed', subcategorias: ['Beliche','Box', 'Box Baú', 'Cabeceira', 'Cama', 'Colchão', 'Cômoda', 'Guarda-Roupa', 'Mesa de Cabeceira', 'Recamier'] },
     'cozinha': { nome: 'Cozinha', icone: 'fa-utensils', subcategorias: ['Armário', 'Cadeira', 'Conj. Mesa de Jantar', 'Mesa'] },
-    'sala': { nome: 'Sala', icone: 'fa-couch', subcategorias: ['Aparador', 'Buffet', 'Cristaleira', 'Home', 'Mesa de Centro', 'Painel', 'Poltrona', 'Rack', 'Sofá'] },
+    'sala': { nome: 'Sala', icone: 'fa-couch', subcategorias: ['Aparador', 'Buffet', 'Cristaleira', 'Mesa de Centro', 'Rack', 'Poltrona', 'Sofá'] },
     'colchoes': { nome: 'Colchões', icone: 'fa-mattress-pillow', subcategorias: ['Solteiro', 'Solteiro King', 'Casal', 'Queen', 'King'] },
     'complementos': { nome: 'Complementos', icone: 'fa-plus-circle', subcategorias: ['Mesa de Computador', 'Multiuso', 'Multiuso Área Serviço', 'Penteadeira', 'Puff'] },
     'infantil': { nome: 'Infantil', icone: 'fa-baby', subcategorias: ['Berço', 'Cômoda', 'Guarda-Roupa'] }
